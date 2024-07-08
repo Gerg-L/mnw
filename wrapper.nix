@@ -32,6 +32,10 @@ lib.makeOverridable (
     vimAlias ? false,
     extraBinPath ? [ ],
     wrapperArgs ? [ ],
+    vimlFiles ? [ ],
+    luaFiles ? [ ],
+    initViml ? "",
+    initLua ? "",
   }:
   let
     packDir =
@@ -174,6 +178,7 @@ lib.makeOverridable (
 
                   vim.opt.runtimepath:append('${packDir packpathDirs}')
                   vim.opt.packpath:append('${packDir packpathDirs}')
+
                 ''
                 + lib.concatLines (
                   lib.mapAttrsToList
@@ -191,6 +196,12 @@ lib.makeOverridable (
                       ruby = withRuby;
                       perl = withPerl;
                     }
+                )
+                + lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
+                  vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
+                )
+                + lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
+                  luaFiles ++ lib.optional (initLua != "") (writeText "init.lua" initLua)
                 )
               )
             }"
