@@ -36,79 +36,73 @@ lib.makeOverridable (
     luaFiles ? [ ],
     initViml ? "",
     initLua ? "",
+    extraBuildCommands ? "",
   }:
   let
-    packDir =
-      packages:
+
+    packpathDir =
+      let
+        pluginsPartitioned = lib.partition (x: x.optional or false) plugins;
+      in
+      {
+        start = map (x: x.plugin or x) pluginsPartitioned.wrong;
+        opt = map (x: x.plugin or x) pluginsPartitioned.right;
+      };
+
+    packedDir =
+      let
+        inherit (packpathDir) start opt;
+      in
       buildEnv {
         name = "vim-pack-dir";
-        paths = lib.flatten (
-          lib.mapAttrsToList (
-            packageName:
-            {
-              start ? [ ],
-              opt ? [ ],
-            }:
-            let
-              findDependenciesRecursively =
-                let
-
-                  transitiveClosure =
-                    plugin:
-                    [ plugin ]
-                    ++ (lib.unique (builtins.concatLists (map transitiveClosure plugin.dependencies or [ ])));
-                in
-                plugins: lib.concatMap transitiveClosure plugins;
-
-              allPlugins = lib.unique (
+        paths =
+          let
+            allPlugins =
+              let
+                findDependenciesRecursively =
+                  let
+                    transitiveClosure = plugin: [ plugin ] ++ map transitiveClosure plugin.dependencies or [ ];
+                  in
+                  lib.flip lib.pipe [
+                    transitiveClosure
+                    lib.flatten
+                    lib.unique
+                  ];
+              in
+              lib.unique (
                 (findDependenciesRecursively start) ++ (lib.subtractLists opt (findDependenciesRecursively opt))
               );
 
-              allPython3Dependencies =
-                ps: lib.flatten (map (plugin: (plugin.python3Dependencies or (_: [ ])) ps) allPlugins);
+            allPython3Dependencies =
+              ps:
+              lib.pipe allPlugins [
+                (map (plugin: (plugin.python3Dependencies or (_: [ ])) ps))
+                lib.flatten
+                lib.unique
+              ];
 
-              vimFarm =
-                prefix: name: drvs:
-                linkFarm name (
-                  map (drv: {
-                    name = "${prefix}/${lib.getName drv}";
-                    path = drv;
-                  }) drvs
-                );
-            in
-            [
-              (vimFarm "pack/${packageName}/start" "packdir-start" allPlugins)
-              (vimFarm "pack/${packageName}/opt" "packdir-opt" opt)
-            ]
-            ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
-              runCommand "vim-python3-deps" { } ''
-                mkdir -p $out/pack/${packageName}/start/__python3_dependencies
-                ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/pack/${packageName}/start/__python3_dependencies/python3
-              ''
-            )
-          ) packages
-        );
-      };
+            vimFarm =
+              prefix: name: drvs:
+              linkFarm name (
+                map (drv: {
+                  name = "${prefix}/${lib.getName drv}";
+                  path = drv;
+                }) drvs
+              );
 
-    myVimPackage =
-      let
-        pluginsPartitioned = lib.partition (x: x.optional) (
-          let
-            defaultPlugin = {
-              plugin = null;
-              config = null;
-              optional = false;
-            };
+            packPath = "pack/gerg-wrapper";
           in
-          map (x: defaultPlugin // (if (x ? plugin) then x else { plugin = x; })) plugins
-        );
-      in
-      {
-        start = map (x: x.plugin) pluginsPartitioned.wrong;
-        opt = map (x: x.plugin) pluginsPartitioned.right;
+          [
+            (vimFarm "${packPath}/start" "packdir-start" allPlugins)
+            (vimFarm "${packPath}/opt" "packdir-opt" opt)
+          ]
+          ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
+            runCommand "vim-python3-deps" { } ''
+              mkdir -p $out/${packPath}/start/__python3_dependencies
+              ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/${packPath}/start/__python3_dependencies/python3
+            ''
+          );
       };
-
-    packpathDirs.myNeovimPackages = myVimPackage;
 
     rubyEnv = bundlerEnv {
       name = "neovim-ruby-env";
@@ -117,15 +111,18 @@ lib.makeOverridable (
         ln -sf ${ruby}/bin/* $out/bin
       '';
     };
+
     python3Env = python3Packages.python.withPackages (
       ps:
-      [ ps.pynvim ]
-      ++ (extraPython3Packages ps)
-      ++ (lib.concatMap (f: f ps) (
-        map (plugin: plugin.python3Dependencies or (_: [ ])) (
-          myVimPackage.start or [ ] ++ myVimPackage.opt or [ ]
-        )
-      ))
+      lib.unique (
+        lib.flatten [
+          ps.pynvim
+          (extraPython3Packages ps)
+          (map (f: f ps) (
+            map (plugin: plugin.python3Dependencies or (_: [ ])) (packpathDir.start ++ packpathDir.opt)
+          ))
+        ]
+      )
     );
 
     luaEnv = neovim-unwrapped.lua.withPackages extraLuaPackages;
@@ -135,77 +132,38 @@ lib.makeOverridable (
       p.Appcpanminus
     ]);
 
-    wrapperArgsStr =
+    wrapperArgsStr = lib.escapeShellArgs (
+      let
+        binPath = lib.makeBinPath (
+          lib.optionals withRuby [ rubyEnv ] ++ lib.optionals withNodeJs [ nodejs ] ++ extraBinPath
+        );
+        inherit (neovim-unwrapped.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
+      in
       wrapperArgs
-      ++ (
-        let
-          binPath = lib.makeBinPath (
-            lib.optionals withRuby [ rubyEnv ] ++ lib.optionals withNodeJs [ nodejs ] ++ extraBinPath
-          );
-        in
-        lib.optionals (binPath != "") [
-          "--suffix"
-          "PATH"
-          ":"
-          binPath
-        ]
-      )
       ++ [
+        "--add-flags"
+        "-u ${placeholder "out"}/init.lua"
         "--prefix"
         "LUA_PATH"
         ";"
-        (neovim-unwrapped.lua.pkgs.luaLib.genLuaPathAbsStr luaEnv)
+        (genLuaPathAbsStr luaEnv)
         "--prefix"
         "LUA_CPATH"
         ";"
-        (neovim-unwrapped.lua.pkgs.luaLib.genLuaCPathAbsStr luaEnv)
+        (genLuaCPathAbsStr luaEnv)
+      ]
+      ++ lib.optionals (binPath != "") [
+        "--suffix"
+        "PATH"
+        ":"
+        binPath
       ]
       ++ lib.optionals withRuby [
         "--set"
         "GEM_HOME"
         "${rubyEnv}/${rubyEnv.ruby.gemPath}"
       ]
-      ++
-        lib.optionals
-          (packpathDirs.myNeovimPackages.start != [ ] || packpathDirs.myNeovimPackages.opt != [ ])
-          [
-            "--add-flags"
-            "-u ${
-              writeText "init.lua" (
-                ''
-                  vim.opt.runtimepath:remove(vim.fn.expand('~/.config/nvim'))
-                  vim.opt.packpath:remove(vim.fn.expand('~/.local/share/nvim/site'))
-
-                  vim.opt.runtimepath:append('${packDir packpathDirs}')
-                  vim.opt.packpath:append('${packDir packpathDirs}')
-
-                ''
-                + lib.concatLines (
-                  lib.mapAttrsToList
-                    (
-                      prog: withProg:
-                      if withProg then
-                        "vim.g.${prog}_host_prog='${placeholder "out"}/bin/nvim-${prog}'"
-                      else
-                        "vim.g.loaded_${prog}_provider=0"
-                    )
-                    {
-                      node = withNodeJs;
-                      python = false;
-                      python3 = withPython3;
-                      ruby = withRuby;
-                      perl = withPerl;
-                    }
-                )
-                + lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
-                  vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
-                )
-                + lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
-                  luaFiles ++ lib.optional (initLua != "") (writeText "init.lua" initLua)
-                )
-              )
-            }"
-          ];
+    );
   in
 
   symlinkJoin {
@@ -215,30 +173,60 @@ lib.makeOverridable (
 
     nativeBuildInputs = [ makeBinaryWrapper ];
 
-    postBuild =
-      lib.optionalString withPython3 ''
+    postBuild = ''
+      wrapProgram $out/bin/nvim ${wrapperArgsStr}
+
+      cat << EOF > $out/init.lua
+      vim.opt.runtimepath:remove(vim.fn.expand('~/.config/nvim'))
+      vim.opt.packpath:remove(vim.fn.expand('~/.local/share/nvim/site'))
+
+      ${lib.optionalString (packpathDir.start != [ ] || packpathDir.opt != [ ]) ''
+        vim.opt.runtimepath:append('${packedDir}')
+        vim.opt.packpath:append('${packedDir}')
+      ''}
+
+      ${lib.concatLines (
+        lib.mapAttrsToList
+          (
+            prog: withProg:
+            if withProg then
+              "vim.g.${prog}_host_prog='${placeholder "out"}/bin/nvim-${prog}'"
+            else
+              "vim.g.loaded_${prog}_provider=0"
+          )
+          {
+            node = withNodeJs;
+            python = false;
+            python3 = withPython3;
+            ruby = withRuby;
+            perl = withPerl;
+          }
+      )}
+
+      ${lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
+        vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
+      )}
+
+      ${lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
+        luaFiles ++ lib.optional (initLua != "") (writeText "init.lua" initLua)
+      )}
+      EOF
+
+      ${lib.optionalString withPython3 ''
         makeWrapper ${python3Env.interpreter} $out/bin/nvim-python3 \
           --unset PYTHONPATH \
           --unset PYTHONSAFEPATH
-      ''
-      + lib.optionalString withRuby ''
-        ln -s ${rubyEnv}/bin/neovim-ruby-host $out/bin/nvim-ruby
-      ''
-      + lib.optionalString withNodeJs ''
-        ln -s ${lib.getExe nodePackages.neovim} $out/bin/nvim-node
-      ''
-      + lib.optionalString withPerl ''
-        ln -s ${lib.getExe perlEnv} $out/bin/nvim-perl
-      ''
-      + ''
-        wrapProgram $out/bin/nvim ${lib.escapeShellArgs wrapperArgsStr}
-      ''
-      + lib.optionalString vimAlias ''
-        ln -s $out/bin/nvim $out/bin/vim
-      ''
-      + lib.optionalString viAlias ''
-        ln -s $out/bin/nvim $out/bin/vi
-      '';
+      ''}
+      ${lib.optionalString withRuby "ln -s ${rubyEnv}/bin/neovim-ruby-host $out/bin/nvim-ruby"}
+      ${lib.optionalString withNodeJs "ln -s ${lib.getExe nodePackages.neovim} $out/bin/nvim-node"}
+      ${lib.optionalString withPerl "ln -s ${lib.getExe perlEnv} $out/bin/nvim-perl"}
+
+      ${lib.optionalString vimAlias "ln -s $out/bin/nvim $out/bin/vim"}
+
+      ${lib.optionalString viAlias "ln -s $out/bin/nvim $out/bin/vi"}
+
+      ${extraBuildCommands}
+    '';
 
     meta = neovim-unwrapped.meta // {
       # To prevent builds on hydra
