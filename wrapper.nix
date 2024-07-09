@@ -40,13 +40,24 @@ lib.makeOverridable (
   }:
   let
 
+    pluginsNormalized = map (x: x.plugin or x) plugins;
+
+    pluginRC = lib.foldl (
+      acc: p:
+      let
+        config = p.config or null;
+      in
+      if (config != null && config != "") then acc ++ [ config ] else acc
+    ) [ ] pluginsNormalized;
+
     packpathDir =
       let
-        pluginsPartitioned = lib.partition (x: x.optional or false) plugins;
+
+        pluginsPartitioned = lib.partition (x: x.optional or false) pluginsNormalized;
       in
       {
-        start = map (x: x.plugin or x) pluginsPartitioned.wrong;
-        opt = map (x: x.plugin or x) pluginsPartitioned.right;
+        start = pluginsPartitioned.wrong;
+        opt = pluginsPartitioned.right;
       };
 
     packedDir =
@@ -139,20 +150,24 @@ lib.makeOverridable (
         );
         inherit (neovim-unwrapped.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
       in
-      wrapperArgs
-      ++ [
+      [
+        "--set"
+        "NVIM_SYSTEM_RPLUGIN_MANIFEST"
+        "${placeholder "out"}/rplugin.vim"
+
         "--add-flags"
         "-u ${placeholder "out"}/init.lua"
+
         "--prefix"
         "LUA_PATH"
         ";"
         (genLuaPathAbsStr luaEnv)
+
         "--prefix"
         "LUA_CPATH"
         ";"
         (genLuaCPathAbsStr luaEnv)
-      ]
-      ++ lib.optionals (binPath != "") [
+
         "--suffix"
         "PATH"
         ":"
@@ -163,6 +178,7 @@ lib.makeOverridable (
         "GEM_HOME"
         "${rubyEnv}/${rubyEnv.ruby.gemPath}"
       ]
+      ++ wrapperArgs
     );
   in
 
@@ -174,17 +190,24 @@ lib.makeOverridable (
     nativeBuildInputs = [ makeBinaryWrapper ];
 
     postBuild = ''
-      wrapProgram $out/bin/nvim ${wrapperArgsStr}
+
+      ${lib.optionalString withPython3 ''
+        makeWrapper ${python3Env.interpreter} $out/bin/nvim-python3 \
+          --unset PYTHONPATH \
+          --unset PYTHONSAFEPATH
+      ''}
+      ${lib.optionalString withRuby "ln -s ${rubyEnv}/bin/neovim-ruby-host $out/bin/nvim-ruby"}
+
+      ${lib.optionalString withNodeJs "ln -s ${lib.getExe nodePackages.neovim} $out/bin/nvim-node"}
+
+      ${lib.optionalString withPerl "ln -s ${lib.getExe perlEnv} $out/bin/nvim-perl"}
 
       cat << EOF > $out/init.lua
-      vim.opt.runtimepath:remove(vim.fn.expand('~/.config/nvim'))
-      vim.opt.packpath:remove(vim.fn.expand('~/.local/share/nvim/site'))
 
       ${lib.optionalString (packpathDir.start != [ ] || packpathDir.opt != [ ]) ''
         vim.opt.runtimepath:append('${packedDir}')
         vim.opt.packpath:append('${packedDir}')
       ''}
-
       ${lib.concatLines (
         lib.mapAttrsToList
           (
@@ -202,24 +225,38 @@ lib.makeOverridable (
             perl = withPerl;
           }
       )}
+      EOF
+
+      echo "Generating remote plugin manifest"
+      export NVIM_RPLUGIN_MANIFEST=$out/rplugin.vim
+      export HOME="$(mktemp -d)"
+      if ! $out/bin/nvim \
+        -u $out/init.lua \
+        -i NONE -n \
+        -V1rplugins.log \
+        +UpdateRemotePlugins +quit! > outfile 2>&1; then
+        cat outfile
+        echo -e "\nGenerating rplugin.vim failed!"
+        exit 1
+      fi
+
+      wrapProgram $out/bin/nvim ${wrapperArgsStr}
+
+      cat << EOF >> $out/init.lua
+
+      vim.opt.runtimepath:remove(vim.fn.expand('~/.config/nvim'))
+      vim.opt.packpath:remove(vim.fn.expand('~/.local/share/nvim/site'))
 
       ${lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
-        vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
+        vimlFiles
+        ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
+        ++ lib.optional (pluginRC != "") (writeText "pluginRC.vim" pluginRC)
       )}
 
       ${lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
         luaFiles ++ lib.optional (initLua != "") (writeText "init.lua" initLua)
       )}
       EOF
-
-      ${lib.optionalString withPython3 ''
-        makeWrapper ${python3Env.interpreter} $out/bin/nvim-python3 \
-          --unset PYTHONPATH \
-          --unset PYTHONSAFEPATH
-      ''}
-      ${lib.optionalString withRuby "ln -s ${rubyEnv}/bin/neovim-ruby-host $out/bin/nvim-ruby"}
-      ${lib.optionalString withNodeJs "ln -s ${lib.getExe nodePackages.neovim} $out/bin/nvim-node"}
-      ${lib.optionalString withPerl "ln -s ${lib.getExe perlEnv} $out/bin/nvim-perl"}
 
       ${lib.optionalString vimAlias "ln -s $out/bin/nvim $out/bin/vim"}
 
