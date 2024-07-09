@@ -136,7 +136,7 @@ lib.makeOverridable (
       )
     );
 
-    luaEnv = neovim-unwrapped.lua.withPackages extraLuaPackages;
+    luaEnv = neovim.lua.withPackages extraLuaPackages;
 
     perlEnv = perl.withPackages (p: [
       p.NeovimExt
@@ -148,7 +148,7 @@ lib.makeOverridable (
         binPath = lib.makeBinPath (
           lib.optionals withRuby [ rubyEnv ] ++ lib.optionals withNodeJs [ nodejs ] ++ extraBinPath
         );
-        inherit (neovim-unwrapped.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
+        inherit (neovim.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
       in
       [
         "--set"
@@ -183,9 +183,9 @@ lib.makeOverridable (
   in
 
   symlinkJoin {
-    name = "neovim-${lib.getVersion neovim-unwrapped}";
+    name = "neovim-${lib.getVersion neovim}";
 
-    paths = [ neovim-unwrapped ];
+    paths = [ neovim ];
 
     nativeBuildInputs = [ makeBinaryWrapper ];
 
@@ -265,11 +265,11 @@ lib.makeOverridable (
       ${extraBuildCommands}
     '';
 
-    meta = neovim-unwrapped.meta // {
+    meta = neovim.meta // {
       # To prevent builds on hydra
       hydraPlatforms = [ ];
       # prefer wrapper over the package
-      priority = (neovim-unwrapped.meta.priority or 0) - 1;
+      priority = (neovim.meta.priority or 0) - 1;
     };
   }
 )
