@@ -72,13 +72,11 @@ lib.makeOverridable (
               let
                 findDependenciesRecursively =
                   let
-                    transitiveClosure = plugin: [ plugin ] ++ map transitiveClosure plugin.dependencies or [ ];
+
+                    transitiveClosure =
+                      plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
                   in
-                  lib.flip lib.pipe [
-                    transitiveClosure
-                    lib.flatten
-                    lib.unique
-                  ];
+                  lib.concatMap transitiveClosure;
               in
               lib.unique (
                 (findDependenciesRecursively start) ++ (lib.subtractLists opt (findDependenciesRecursively opt))
@@ -87,8 +85,7 @@ lib.makeOverridable (
             allPython3Dependencies =
               ps:
               lib.pipe allPlugins [
-                (map (plugin: (plugin.python3Dependencies or (_: [ ])) ps))
-                lib.flatten
+                (lib.concatMap (plugin: (plugin.python3Dependencies or (_: [ ])) ps))
                 lib.unique
               ];
 
@@ -126,13 +123,11 @@ lib.makeOverridable (
     python3Env = python3Packages.python.withPackages (
       ps:
       lib.unique (
-        lib.flatten [
-          ps.pynvim
-          (extraPython3Packages ps)
-          (map (f: f ps) (
-            map (plugin: plugin.python3Dependencies or (_: [ ])) (packpathDir.start ++ packpathDir.opt)
-          ))
-        ]
+        [ ps.pynvim ]
+        ++ (extraPython3Packages ps)
+        ++ (lib.concatMap (f: f ps) (
+          map (plugin: plugin.python3Dependencies or (_: [ ])) (packpathDir.start ++ packpathDir.opt)
+        ))
       )
     );
 
