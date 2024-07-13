@@ -243,13 +243,13 @@ lib.makeOverridable (
       vim.opt.packpath:remove(vim.fn.expand('~/.local/share/nvim/site'))
 
       ${lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
-        vimlFiles
-        ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
+        lib.optional (initViml != "") (writeText "init.vim" initViml)
         ++ lib.optional (pluginRC != "") (writeText "pluginRC.vim" pluginRC)
+        ++ vimlFiles
       )}
 
       ${lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
-        luaFiles ++ lib.optional (initLua != "") (writeText "init.lua" initLua)
+        lib.optional (initLua != "") (writeText "init.lua" initLua) ++ luaFiles
       )}
       EOF
 
