@@ -42,13 +42,15 @@ lib.makeOverridable (
 
     pluginsNormalized = map (x: x.plugin or x) plugins;
 
-    pluginRC = lib.foldl (
-      acc: p:
-      let
-        config = p.config or null;
-      in
-      if (config != null && config != "") then acc ++ [ config ] else acc
-    ) [ ] pluginsNormalized;
+    pluginRC = lib.concatLines (
+      lib.foldl (
+        acc: p:
+        let
+          config = p.config or null;
+        in
+        if (config != null && config != "") then acc ++ [ config ] else acc
+      ) [ ] pluginsNormalized
+    );
 
     packpathDir =
       let
