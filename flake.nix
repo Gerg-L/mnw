@@ -1,1 +1,7 @@
-{ outputs = _: { lib.wrap = x: x.callPackage ./wrapper.nix { }; }; }
+{
+  outputs =
+    { self, ... }:
+    {
+      lib.wrap = pkgs: pkgs.callPackage "${self}/wrapper.nix" { };
+    };
+}
