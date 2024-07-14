@@ -43,16 +43,35 @@ lib.makeOverridable (
   }:
   let
     allPlugins =
-      let
-        findDependenciesRecursively =
+      map
+        (
+          x:
           let
-
-            transitiveClosure =
-              plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
+            plugin =
+              if x ? plugin then
+                lib.warn "Plugin ${x.plugin.name or "unknown"} has the plugin attribute... ignoring" x.plugin
+              else
+                x;
           in
-          lib.concatMap transitiveClosure;
-      in
-      lib.unique (findDependenciesRecursively plugins);
+          if plugin ? optional then
+            lib.warn "Plugin ${x.plugin.name or "unknown"} has the optional attribute... ignoring" x
+          else if plugin ? config then
+            lib.warn "Plugin ${x.plugin.name or "unknown"} has the config attribute... ignoring" x
+          else
+            x
+        )
+        (
+          let
+            findDependenciesRecursively =
+              let
+
+                transitiveClosure =
+                  plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
+              in
+              lib.concatMap transitiveClosure;
+          in
+          lib.unique (findDependenciesRecursively plugins)
+        );
 
     allPython3Dependencies =
       ps:
