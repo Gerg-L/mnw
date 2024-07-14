@@ -250,17 +250,6 @@ lib.makeOverridable (
       runHook postInstall
     '';
 
-    passthru = {
-      inherit
-        providers
-        allPlugins
-        luaConfig
-        wrapperArgsStr
-        wrapperArgs
-        packedDir
-        ;
-    };
-
     meta = (builtins.removeAttrs neovim.meta [ "position" ]) // {
       # To prevent builds on hydra
       hydraPlatforms = [ ];
