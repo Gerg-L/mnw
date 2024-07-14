@@ -72,10 +72,19 @@ mnw.lib.wrap pkgs {
     # You can pass a directory 
     # and use it just like it was 
     # ~/.config/nvim/init.lua
-    ./myLuaConfig
+    {
+      # name or pname+version is required
+      name = "myLuaConfig";
+      # Setting outPath is a bit of a hack
+      # But it works fine
+      outPath = ./myLuaConfig;
+    }
     # or you can pass nixpkgs vimPlugins
     pkgs.vimPlugins.fzf-lua
   ];
+  # or you can use plugins from a npins generated file
+  # to track the newest commits of a plugin
+  # check my config for an example
 
   # Lsps and fzf/rg go here and get appended to PATH
   extraBinPath = [ pkgs.nil ];
