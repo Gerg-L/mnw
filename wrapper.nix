@@ -42,36 +42,43 @@ lib.makeOverridable (
     appName ? "nvim",
   }:
   let
-    allPlugins =
-      map
-        (
-          x:
-          let
-            plugin =
-              if x ? plugin then
-                lib.warn "Plugin ${x.plugin.name or "unknown"} has the plugin attribute... ignoring" x.plugin
-              else
-                x;
-          in
-          if plugin ? optional then
-            lib.warn "Plugin ${x.plugin.name or "unknown"} has the optional attribute... ignoring" x
-          else if plugin ? config then
-            lib.warn "Plugin ${x.plugin.name or "unknown"} has the config attribute... ignoring" x
-          else
-            x
-        )
-        (
-          let
-            findDependenciesRecursively =
-              let
+    allPluginsUnchecked =
 
-                transitiveClosure =
-                  plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
-              in
-              lib.concatMap transitiveClosure;
+      let
+        findDependenciesRecursively =
+          let
+
+            transitiveClosure =
+              plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
           in
-          lib.unique (findDependenciesRecursively plugins)
-        );
+          lib.concatMap transitiveClosure;
+      in
+      lib.unique (findDependenciesRecursively plugins);
+
+    allPlugins = map (
+      x:
+      let
+        name = x.pname or x.name or "unknown";
+      in
+
+      assert lib.assertMsg (x ? name || (x ? pname && x ? version)) ''
+        Either name or pname and version have to be defined for all plugins
+      '';
+      assert lib.assertMsg (!x ? plugin) ''
+        The "plugin" attribute of plugins are not supported by mnw
+        please remove it from plugin: ${name}
+      '';
+      assert lib.assertMsg (!x ? optional) ''
+        The "optional" attribute of plugins is not supported by mnw
+        please remove it from plugin: ${name}
+      '';
+      assert lib.assertMsg (!x ? config) ''
+        The "config" attribute of plugins is not supported by mnw
+        please remove it from plugin: ${name}
+      '';
+
+      x
+    ) allPluginsUnchecked;
 
     allPython3Dependencies =
       ps:
