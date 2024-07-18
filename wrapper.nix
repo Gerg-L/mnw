@@ -37,34 +37,16 @@ lib.makeOverridable (
     appName,
   }:
   let
-    allPluginsUnchecked =
-
-      let
-        findDependenciesRecursively =
-          let
-
-            transitiveClosure =
-              plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
-          in
-          lib.concatMap transitiveClosure;
-      in
-      lib.unique (findDependenciesRecursively plugins);
-
-    allPlugins = map (
+    checkedPlugins = map (
       x:
       let
         name = x.pname or x.name or "unknown";
       in
-
       assert lib.assertMsg (x ? name || (x ? pname && x ? version)) ''
         Either name or pname and version have to be defined for all plugins
       '';
       assert lib.assertMsg (!x ? plugin) ''
         The "plugin" attribute of plugins are not supported by mnw
-        please remove it from plugin: ${name}
-      '';
-      assert lib.assertMsg (!x ? optional) ''
-        The "optional" attribute of plugins is not supported by mnw
         please remove it from plugin: ${name}
       '';
       assert lib.assertMsg (!x ? config) ''
@@ -73,7 +55,30 @@ lib.makeOverridable (
       '';
 
       x
-    ) allPluginsUnchecked;
+    ) plugins;
+
+    splitPlugins =
+      let
+        partitioned = lib.partition (x: x.optional or false) checkedPlugins;
+      in
+      {
+        start = partitioned.wrong;
+        opt = partitioned.right;
+      };
+
+    allPlugins =
+      let
+        findDependenciesRecursively =
+          let
+            transitiveClosure =
+              plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
+          in
+          lib.concatMap transitiveClosure;
+      in
+      lib.unique (
+        (findDependenciesRecursively splitPlugins.start)
+        ++ (lib.subtractLists splitPlugins.opt (findDependenciesRecursively splitPlugins.opt))
+      );
 
     allPython3Dependencies =
       ps:
@@ -87,21 +92,33 @@ lib.makeOverridable (
       paths =
         let
           packPath = "pack/gerg-wrapper";
+          vimFarm =
+            name: plugins:
+            linkFarm "${name}-packdir" (
+              map (drv: {
+                name = "${packPath}/${name}/${lib.getName drv}";
+                path = drv;
+              }) plugins
+            );
         in
-        lib.singleton (
-          linkFarm "packdir" (
-            map (drv: {
-              name = "${packPath}/start/${lib.getName drv}";
-              path = drv;
-            }) allPlugins
-          )
-        )
+        [
+          (vimFarm "start" allPlugins)
+          (vimFarm "opt" splitPlugins.opt)
+        ]
+
         ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
           runCommand "vim-python3-deps" { } ''
             mkdir -p $out/${packPath}/start/__python3_dependencies
             ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/${packPath}/start/__python3_dependencies/python3
           ''
+
         );
+      postBuild = ''
+        mkdir $out/nix-support
+        for i in $(find -L $out -name propagated-build-inputs ); do
+          cat "$i" >> $out/nix-support/propagated-build-inputs
+        done
+      '';
     };
 
     providers =
