@@ -39,22 +39,28 @@ lib.makeOverridable (
   let
     checkedPlugins = map (
       x:
-      let
-        name = x.pname or x.name or "unknown";
-      in
-      assert lib.assertMsg (x ? name || (x ? pname && x ? version)) ''
-        Either name or pname and version have to be defined for all plugins
-      '';
-      assert lib.assertMsg (!x ? plugin) ''
-        The "plugin" attribute of plugins are not supported by mnw
-        please remove it from plugin: ${name}
-      '';
-      assert lib.assertMsg (!x ? config) ''
-        The "config" attribute of plugins is not supported by mnw
-        please remove it from plugin: ${name}
-      '';
+      if builtins.isPath x then
+        {
+          name = "plugin-${builtins.baseNameOf x}";
+          outPath = x;
+        }
+      else
+        let
+          name = x.pname or x.name or "unknown";
+        in
+        assert lib.assertMsg (x ? name || (x ? pname && x ? version)) ''
+          Either name or pname and version have to be defined for all plugins
+        '';
+        assert lib.assertMsg (!x ? plugin) ''
+          The "plugin" attribute of plugins are not supported by mnw
+          please remove it from plugin: ${name}
+        '';
+        assert lib.assertMsg (!x ? config) ''
+          The "config" attribute of plugins is not supported by mnw
+          please remove it from plugin: ${name}
+        '';
 
-      x
+        x
     ) plugins;
 
     splitPlugins =

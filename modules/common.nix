@@ -96,7 +96,18 @@
     loadDefaultRC = lib.mkEnableOption "loading nix external neovim configuration (~/.config/$NVIM_APPNAME/init.lua usually)";
 
     plugins = lib.mkOption {
-      type = lib.types.listOf lib.types.pathInStore;
+      type = lib.types.listOf (
+        lib.types.oneOf [
+          lib.types.package
+          (lib.mkOptionType {
+            name = "pathLiteral";
+            description = "literal path";
+            descriptionClass = "noun";
+            check = builtins.isPath;
+            merge = lib.mergeEqualOption;
+          })
+        ]
+      );
       default = [ ];
       description = "A list of plugins to load";
       example = ''
