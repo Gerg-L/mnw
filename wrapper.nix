@@ -12,34 +12,29 @@
   runCommand,
   buildEnv,
   writeText,
-  neovim-unwrapped,
   lndir,
   stdenvNoCC,
 }:
 lib.makeOverridable (
   {
-    neovim ? neovim-unwrapped,
-    withPython3 ? true,
-    # the function you would have passed to python3.withPackages
-    extraPython3Packages ? (_: [ ]),
-    withNodeJs ? false,
-    withRuby ? true,
-    withPerl ? false,
-    # the function you would have passed to lua.withPackages
-    extraLuaPackages ? (_: [ ]),
-
-    plugins ? [ ],
-    viAlias ? false,
-    vimAlias ? false,
-    extraBinPath ? [ ],
-    wrapperArgs ? [ ],
-    vimlFiles ? [ ],
-    luaFiles ? [ ],
-    initViml ? "",
-    initLua ? "",
-    extraBuildCommands ? "",
-    loadDefaultRC ? false,
-    appName ? "nvim",
+    neovim,
+    withPython3,
+    extraPython3Packages,
+    withNodeJs,
+    withRuby,
+    withPerl,
+    extraLuaPackages,
+    plugins,
+    viAlias,
+    vimAlias,
+    extraBinPath,
+    wrapperArgs,
+    vimlFiles,
+    luaFiles,
+    initViml,
+    initLua,
+    loadDefaultRC,
+    appName,
   }:
   let
     allPluginsUnchecked =
@@ -251,8 +246,6 @@ lib.makeOverridable (
       ${lib.optionalString vimAlias "ln -s $out/bin/nvim $out/bin/vim"}
 
       ${lib.optionalString viAlias "ln -s $out/bin/nvim $out/bin/vi"}
-
-      ${extraBuildCommands}
 
       runHook postInstall
     '';

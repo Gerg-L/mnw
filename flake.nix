@@ -2,7 +2,32 @@
   outputs =
     { self, ... }:
     {
-      lib.wrap = pkgs: pkgs.callPackage ./wrapper.nix { };
+      lib = {
+        uncheckedWrap = pkgs: pkgs.callPackage ./wrapper.nix { };
+
+        wrap =
+          pkgs: config:
+          let
+            inherit (pkgs) lib;
+          in
+          self.lib.uncheckedWrap pkgs (
+            (builtins.removeAttrs
+              (lib.evalModules {
+                specialArgs = {
+                  inherit pkgs;
+                };
+                modules = [
+                  ./modules/common.nix
+                  { programs.mnw = config; }
+                ];
+              }).config.programs.mnw
+            )
+              [
+                "enable"
+                "finalPackage"
+              ]
+          );
+      };
 
       nixosModules = {
         default = self.nixosModules.mnw;
