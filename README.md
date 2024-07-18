@@ -1,97 +1,118 @@
+
 # Minimal NeoVim Wrapper
 
 This flake exists because the nixpkgs neovim wrapper is a pain
 
 and I conceptually disagree with nixvim
 
-### About
+## About
 
-There is no flake inputs.
+Based off the nixpkgs wrapper but:
+- in one place
+- more error checking
+- a sane interface
+- `evalModules` "type" checking
+- more convenience options
+- doesn't take two functions to wrap
 
+There are no flake inputs.
 
-The wrapper takes a pkgs argument 
-
-so you can resume whatever nixpkgs instance you have lying around
-
-God knows there's too many already in your config...
-
-### Usage
+## Usage
 
 Add the flake input
 ```nix
 mnw.url = "github:Gerg-L/mnw";
 ```
 
-and use `mnw.lib.wrap`
+or `import` the base of this repo using
 
-or `callPackage` /wrapper.nix and use that
+to use [flake-compat](https://github.com/edolstra/flake-compat)
 
+Then use one of the modules or `mnw.lib.wrap`
+
+### Wrapper function
 The wrapper takes two arguments `pkgs` and then an attribute set of config options
-here's a small example
-
 
 ```nix
-mnw.lib.wrap pkgs {
-  # The neovim package to wrap 
-  # Ensure you're using the -unwrapped variant
-  neovim = pkgs.neovim-unwrapped;
+let
+  neovim = mnw.lib.wrap pkgs {
+    #config options
+  };
+in {
+...
+```
 
-  # Sets NVIMAPP_NAME
-  appName = "nvim";
+then add it to `environment.systemPackages` or `users.users.<name>.packages` or anywhere you can add a package
 
-  # Extra arguments passed to makeWrapper
-  wrapperArgs = [ ];
+### Modules
+Import `{nixosModules,darwinModules,homeManagerModules}.mnw` into your respective config
 
-  # Lua init files to load
-  luaFiles = [ ];
-  # Lua init string to load
-  initLua = "";
-  # VimL init files to load
-  vimlFiles = [ ];
-  # VimLinit string to load
-  initViml = "";
+and use the `programs.mnw` options
 
-  # Symlink vi/vim to nvim
-  viAlias = false;
-  vimAlias = false;
+```nix
+programs.mnw = {
+  enable = true;
+#other config
+```
 
-  # Setup language providers for you
-  withRuby = true;
-  withNodeJs = false;
-  withPerl = false;
-  withPython3 = true;
-  extraPython3Packages = p: [ ];
+and it'll the wrapped neovim to `environment.systemPackages` or `home.packages`
 
-  # Extra luaPackages which may be needed by plugins
-  extraLuaPackages = _: [ ];
+to not install by default use the `.dontInstall` module instead and add `config.programs.mnw.finalPackage` where you want
 
-  # Whether to load ~/.config/nvim/init.lua
-  loadDefaultRC = false;
 
-  plugins = [
-    # You can pass a directory 
-    # and use it just like it was 
-    # ~/.config/nvim/init.lua
-    {
-      # name or pname+version is required
-      name = "myLuaConfig";
-      # Setting outPath is a bit of a hack
-      # But it works fine
-      outPath = ./myLuaConfig;
-    }
-    # or you can pass nixpkgs vimPlugins
-    pkgs.vimPlugins.fzf-lua
-  ];
-  # or you can use plugins from a npins generated file
-  # to track the newest commits of a plugin
-  # check my config for an example
+### Config Options
 
-  # Lsps and fzf/rg go here and get appended to PATH
-  extraBinPath = [ pkgs.nil ];
+```nix
+# The neovim package to wrap
+# Ensure you're using the -unwrapped variant
+neovim = pkgs.neovim-unwrapped;
 
-  # idk why you'd need this exactly but it's here
-  extraBuildCommands = "";
-}
+plugins = [
+  # You can pass a directory
+  # and use it just like it's
+  # ~/.config/nvim
+  ./myNeovimConfig
+  # and you can pass vimPlugins from nixpkgs
+  pkgs.vimPlugins.fzf-lua
+];
+# I recommend using plugins from a npins source
+# to track the newest commits of a plugin
+# check my config for an example
+
+# Lsps and fzf/rg go here and get appended to PATH
+extraBinPath = [ pkgs.nil ];
+
+# Sets NVIMAPP_NAME
+appName = "nvim";
+
+# Extra arguments passed to makeWrapper
+wrapperArgs = [ ];
+
+# Whether to load ~/.config/nvim/init.lua
+loadDefaultRC = false;
+
+# Lua init files to load
+luaFiles = [ ];
+# Lua init string to load
+initLua = "";
+# VimL init files to load
+vimlFiles = [ ];
+# VimLinit string to load
+initViml = "";
+
+# Symlink vi/vim to nvim
+viAlias = false;
+vimAlias = false;
+
+# Setup and enable providers
+withRuby = true;
+withNodeJs = false;
+withPerl = false;
+withPython3 = true;
+extraPython3Packages = p: [ ];
+
+# Extra luaPackages which may be needed by plugins
+extraLuaPackages = _: [ ];
 
 ```
 
