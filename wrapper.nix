@@ -37,35 +37,9 @@ lib.makeOverridable (
     appName,
   }:
   let
-    checkedPlugins = map (
-      x:
-      if builtins.isPath x then
-        {
-          name = "plugin-${builtins.baseNameOf x}";
-          outPath = x;
-        }
-      else
-        let
-          name = x.pname or x.name or "unknown";
-        in
-        assert lib.assertMsg (x ? name || (x ? pname && x ? version)) ''
-          Either name or pname and version have to be defined for all plugins
-        '';
-        assert lib.assertMsg (!x ? plugin) ''
-          The "plugin" attribute of plugins are not supported by mnw
-          please remove it from plugin: ${name}
-        '';
-        assert lib.assertMsg (!x ? config) ''
-          The "config" attribute of plugins is not supported by mnw
-          please remove it from plugin: ${name}
-        '';
-
-        x
-    ) plugins;
-
     splitPlugins =
       let
-        partitioned = lib.partition (x: x.optional or false) checkedPlugins;
+        partitioned = lib.partition (x: x.optional or false) plugins;
       in
       {
         start = partitioned.wrong;
@@ -77,14 +51,12 @@ lib.makeOverridable (
         findDependenciesRecursively =
           let
             transitiveClosure =
-              plugin: [ plugin ] ++ (lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]));
+              plugin: [ plugin ] ++ lib.concatMap transitiveClosure plugin.dependencies or [ ];
           in
           lib.concatMap transitiveClosure;
       in
-      lib.unique (
-        (findDependenciesRecursively splitPlugins.start)
-        ++ (lib.subtractLists splitPlugins.opt (findDependenciesRecursively splitPlugins.opt))
-      );
+      (findDependenciesRecursively splitPlugins.start)
+      ++ (lib.subtractLists splitPlugins.opt (findDependenciesRecursively splitPlugins.opt));
 
     allPython3Dependencies =
       ps:
@@ -102,7 +74,9 @@ lib.makeOverridable (
             name: plugins:
             linkFarm "${name}-packdir" (
               map (drv: {
-                name = "${packPath}/${name}/${lib.getName drv}";
+                name = "${packPath}/${name}/${
+                  if (drv ? pname && (builtins.tryEval drv.pname).success) then drv.pname else drv.name
+                }";
                 path = drv;
               }) plugins
             );
@@ -130,7 +104,7 @@ lib.makeOverridable (
     providers =
       let
         pythonEnv = python3Packages.python.withPackages (
-          ps: lib.unique ([ ps.pynvim ] ++ (extraPython3Packages ps) ++ (allPython3Dependencies ps))
+          ps: [ ps.pynvim ] ++ (extraPython3Packages ps) ++ (allPython3Dependencies ps)
         );
 
         perlEnv = perl.withPackages (p: [
