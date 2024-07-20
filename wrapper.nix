@@ -205,6 +205,7 @@ lib.makeOverridable (
 
       ${lib.optionalString (allPlugins != [ ]) ''
         vim.opt.packpath:append('${packedDir}')
+        vim.opt.runtimepath:append('${packedDir}')
       ''}
 
       ${lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
