@@ -12,6 +12,7 @@
   runCommand,
   buildEnv,
   writeText,
+  writeTextDir,
   lndir,
   stdenvNoCC,
 }:
@@ -65,11 +66,42 @@ lib.makeOverridable (
         lib.unique
       ];
 
-    packedDir = buildEnv {
+    userConfig = writeTextDir "pack/generated/start/user/plugin/init.lua" (
+      (lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
+        vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
+      ))
+      +
+
+        (lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
+          lib.optional (initLua != "") (writeText "init.lua" initLua) ++ luaFiles
+        ))
+    );
+
+    genConfig = writeTextDir "pack/generated/start/gen/plugin/init.lua" (
+      lib.concatLines (
+        lib.mapAttrsToList
+          (
+            prog: withProg:
+            if withProg then
+              "vim.g.${prog}_host_prog='${providers}/bin/neovim-${prog}-host'"
+            else
+              "vim.g.loaded_${prog}_provider=0"
+          )
+          {
+            node = withNodeJs;
+            python = false;
+            python3 = withPython3;
+            ruby = withRuby;
+            perl = withPerl;
+          }
+      )
+    );
+
+    configDir = buildEnv {
       name = "neovim-pack-dir";
       paths =
         let
-          packPath = "pack/gerg-wrapper";
+          packPath = "pack/user";
           vimFarm =
             name: plugins:
             linkFarm "${name}-packdir" (
@@ -82,6 +114,8 @@ lib.makeOverridable (
             );
         in
         [
+          userConfig
+          genConfig
           (vimFarm "start" allPlugins)
           (vimFarm "opt" splitPlugins.opt)
         ]
@@ -98,7 +132,7 @@ lib.makeOverridable (
         for i in $(find -L $out -name propagated-build-inputs ); do
           cat "$i" >> $out/nix-support/propagated-build-inputs
         done
-      '';
+     '';
     };
 
     providers =
@@ -150,9 +184,6 @@ lib.makeOverridable (
         inherit (neovim.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
       in
       [
-        "--add-flags"
-        "--cmd \"luafile ${placeholder "out"}/init.lua\""
-
         "--prefix"
         "LUA_PATH"
         ";"
@@ -172,50 +203,17 @@ lib.makeOverridable (
         "NVIM_APPNAME"
         appName
       ]
+      ++ (lib.optionals (!loadDefaultRC) [
+        "--add-flags"
+        "-u NORC"
+      ])
+      ++ (lib.optionals (plugins != [ ]) [
+        "--add-flags"
+        "--cmd 'set packpath^=${configDir} | set rtp^=${configDir}'"
+      ])
       ++ wrapperArgs
     );
 
-    luaConfig = writeText "init.lua" ''
-      ${lib.optionalString (!loadDefaultRC)
-        #Stolen from nixvim
-        ''
-          vim.opt.runtimepath:remove(vim.fn.stdpath('config'))              -- ~/.config/nvim
-          vim.opt.runtimepath:remove(vim.fn.stdpath('config') .. "/after")  -- ~/.config/nvim/after
-          vim.opt.runtimepath:remove(vim.fn.stdpath('data') .. "/site")     -- ~/.local/share/nvim/site
-        ''
-      }
-
-      ${lib.concatLines (
-        lib.mapAttrsToList
-          (
-            prog: withProg:
-            if withProg then
-              "vim.g.${prog}_host_prog='${providers}/bin/neovim-${prog}-host'"
-            else
-              "vim.g.loaded_${prog}_provider=0"
-          )
-          {
-            node = withNodeJs;
-            python = false;
-            python3 = withPython3;
-            ruby = withRuby;
-            perl = withPerl;
-          }
-      )}
-
-      ${lib.optionalString (allPlugins != [ ]) ''
-        vim.opt.packpath:append('${packedDir}')
-        vim.opt.runtimepath:append('${packedDir}')
-      ''}
-
-      ${lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
-        vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
-      )}
-
-      ${lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
-        lib.optional (initLua != "") (writeText "init.lua" initLua) ++ luaFiles
-      )}
-    '';
   in
 
   stdenvNoCC.mkDerivation {
@@ -237,12 +235,10 @@ lib.makeOverridable (
 
       lndir -silent ${neovim} $out
 
-      ln -s ${luaConfig} $out/init.lua
-
       echo "Looking for lua dependencies..."
       source ${neovim.lua}/nix-support/utils.sh
 
-      _addToLuaPath "${packedDir}"
+      _addToLuaPath "${configDir}"
 
       echo "LUA_PATH towards the end of packdir: $LUA_PATH"
 
@@ -258,7 +254,7 @@ lib.makeOverridable (
     '';
 
     passthru = {
-      inherit packedDir;
+      inherit configDir;
     };
 
     meta =
