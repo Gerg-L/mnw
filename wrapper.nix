@@ -132,6 +132,17 @@ lib.makeOverridable (
         for i in $(find -L $out -name propagated-build-inputs ); do
           cat "$i" >> $out/nix-support/propagated-build-inputs
         done
+
+        # Semi-cursed helptag generation
+        mkdir -p $out/doc
+        pushd $out/doc
+        for ppath in ../pack/*/*/*/doc
+        do
+        PLUGIN_DIR=$(basename ''${ppath::-4})
+        ln -snf "$ppath" "$PLUGIN_DIR"
+        done
+        ${lib.getExe neovim} -N -u NONE -i NONE -n -E -s -V1 -c "helptags $out/doc" -c "quit!"
+        popd
      '';
     };
 
