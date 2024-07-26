@@ -239,7 +239,16 @@ lib.makeOverridable (
 
       ln -s ${luaConfig} $out/init.lua
 
-      wrapProgram $out/bin/nvim ${wrapperArgsStr}
+      echo "Looking for lua dependencies..."
+      source ${neovim.lua}/nix-support/utils.sh
+
+      _addToLuaPath "${packedDir}"
+
+      echo "LUA_PATH towards the end of packdir: $LUA_PATH"
+
+      wrapProgram $out/bin/nvim ${wrapperArgsStr} \
+        --prefix LUA_PATH ';' "$LUA_PATH" \
+        --prefix LUA_CPATH ';' "$LUA_CPATH"
 
       ${lib.optionalString vimAlias "ln -s $out/bin/nvim $out/bin/vim"}
 
@@ -248,11 +257,20 @@ lib.makeOverridable (
       runHook postInstall
     '';
 
-    meta = (builtins.removeAttrs neovim.meta [ "position" ]) // {
-      # To prevent builds on hydra
-      hydraPlatforms = [ ];
-      # prefer wrapper over the package
-      priority = (neovim.meta.priority or 0) - 1;
+    passthru = {
+      inherit packedDir;
     };
+
+    meta =
+      (builtins.removeAttrs neovim.meta [
+        "position"
+        "outputsToInstall"
+      ])
+      // {
+        # To prevent builds on hydra
+        hydraPlatforms = [ ];
+        # prefer wrapper over the package
+        priority = (neovim.meta.priority or 0) - 1;
+      };
   }
 )
