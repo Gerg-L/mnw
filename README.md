@@ -55,7 +55,7 @@ programs.mnw = {
 #other config
 ```
 
-and it'll the wrapped neovim to `environment.systemPackages` or `home.packages`
+and it'll install the wrapped neovim to `environment.systemPackages` or `home.packages`
 
 to not install by default use the `.dontInstall` module instead and add `config.programs.mnw.finalPackage` where you want
 
