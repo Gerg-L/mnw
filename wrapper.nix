@@ -119,8 +119,8 @@ lib.makeOverridable (
           (vimFarm "pack/mnw" "start" splitStart.wrong)
           (vimFarm "pack/mnw" "opt" splitOpt.wrong)
 
-          (vimFarm "pack/nixpkgs" "start" splitStart.wrong)
-          (vimFarm "pack/nixpkgs" "opt" splitOpt.wrong)
+          (vimFarm "pack/nixpkgs" "start" splitStart.right)
+          (vimFarm "pack/nixpkgs" "opt" splitOpt.right)
         ]
 
         ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
