@@ -66,18 +66,16 @@ lib.makeOverridable (
         lib.unique
       ];
 
-    userConfig = writeTextDir "pack/generated/start/user/plugin/init.lua" (
+    userConfig = writeTextDir "pack/generated/start/userConfig/plugin/init.lua" (
       (lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
         vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
       ))
-      +
-
-        (lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
-          lib.optional (initLua != "") (writeText "init.lua" initLua) ++ luaFiles
-        ))
+      + (lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
+        lib.optional (initLua != "") (writeText "init.lua" initLua) ++ luaFiles
+      ))
     );
 
-    genConfig = writeTextDir "pack/generated/start/gen/plugin/init.lua" (
+    genConfig = writeTextDir "pack/generated/start/genConfig/plugin/init.lua" (
       lib.concatLines (
         lib.mapAttrsToList
           (
@@ -101,12 +99,14 @@ lib.makeOverridable (
       name = "neovim-pack-dir";
       paths =
         let
-          packPath = "pack/user";
+          splitStart = fromNixpkgs allPlugins;
+          splitOpt = fromNixpkgs splitPlugins.opt;
+          fromNixpkgs = lib.partition (x: x.vimPlugin or false);
           vimFarm =
-            name: plugins:
+            dir: name: plugins:
             linkFarm "${name}-packdir" (
               map (drv: {
-                name = "${packPath}/${name}/${
+                name = "${dir}/${name}/${
                   if (drv ? pname && (builtins.tryEval drv.pname).success) then drv.pname else drv.name
                 }";
                 path = drv;
@@ -116,14 +116,17 @@ lib.makeOverridable (
         [
           userConfig
           genConfig
-          (vimFarm "start" allPlugins)
-          (vimFarm "opt" splitPlugins.opt)
+          (vimFarm "pack/mnw" "start" splitStart.wrong)
+          (vimFarm "pack/mnw" "opt" splitOpt.wrong)
+
+          (vimFarm "pack/nixpkgs" "start" splitStart.wrong)
+          (vimFarm "pack/nixpkgs" "opt" splitOpt.wrong)
         ]
 
         ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
           runCommand "vim-python3-deps" { } ''
-            mkdir -p $out/${packPath}/start/__python3_dependencies
-            ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/${packPath}/start/__python3_dependencies/python3
+            mkdir -p $out/pack/mnw/start/__python3_dependencies
+            ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/pack/mnw/start/__python3_dependencies/python3
           ''
 
         );
@@ -136,14 +139,14 @@ lib.makeOverridable (
         # Semi-cursed helptag generation
         mkdir -p $out/doc
         pushd $out/doc
-        for ppath in ../pack/*/*/*/doc
+        for ppath in ../pack/mnw/*/*/doc
         do
         PLUGIN_DIR=$(basename ''${ppath::-4})
         ln -snf "$ppath" "$PLUGIN_DIR"
         done
         ${lib.getExe neovim} -N -u NONE -i NONE -n -E -s -V1 -c "helptags $out/doc" -c "qa!"
         popd
-     '';
+      '';
     };
 
     providers =
