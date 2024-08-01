@@ -66,6 +66,7 @@
 
     withRuby = (lib.mkEnableOption "configuring and enabling the ruby provider") // {
       default = true;
+      example = false;
     };
 
     withNodeJs = lib.mkEnableOption "configuring and enabling the node provider";
@@ -73,6 +74,7 @@
 
     withPython3 = (lib.mkEnableOption "configuring and enabling the python3 provider") // {
       default = true;
+      example = false;
     };
 
     extraPython3Packages = lib.mkOption {
