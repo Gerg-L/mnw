@@ -99,80 +99,78 @@
 
     plugins =
       let
-        pluginType = (
-          lib.types.submodule (
-            { config, options, ... }:
-            {
-              freeformType = lib.types.attrs;
+        pluginType = lib.types.submodule (
+          { config, options, ... }:
+          {
+            freeformType = lib.types.attrs;
 
-              options = {
-                pname = lib.mkOption {
-                  type = lib.types.str;
-                  description = "Versionless name of plugin";
-                };
-                version = lib.mkOption {
-                  type = lib.types.str;
-                  description = "Version of plugin";
-                };
-
-                name = lib.mkOption {
-                  type = lib.types.str;
-                  description = "Name of plugin";
-                };
-
-                src = lib.mkOption {
-                  type = lib.types.pathInStore;
-                  description = "Path in store to plugin";
-                };
-
-                outPath = lib.mkOption {
-                  type = lib.types.pathInStore;
-                  description = "Path in store to plugin";
-                };
-
-                dependencies = lib.mkOption {
-                  type = lib.types.listOf pluginType;
-                  description = "Dependencies of plugin";
-                  default = [ ];
-                };
-
-                python3Dependencies = lib.mkOption {
-                  type = lib.types.functionTo (lib.types.listOf lib.types.package);
-                  description = "A function which returns a list of extra needed python3 packages";
-                  default = _: [ ];
-                };
-
-                optional = lib.mkOption {
-                  type = lib.types.bool;
-                  description = "Wether to not load plugin automatically at startup";
-                  default = false;
-                };
-
-                plugin = lib.mkOption {
-                  apply = _: ''
-                    The "plugin" attribute of plugins is not supported by mnw
-                    please remove it from plugin: ${config.name}
-                  '';
-                };
-                config = lib.mkOption {
-                  apply = _: ''
-                    The "config" attribute of plugins is not supported by mnw
-                    please remove it from plugin: ${config.name}
-                  '';
-                };
+            options = {
+              pname = lib.mkOption {
+                type = lib.types.str;
+                description = "Versionless name of plugin";
+              };
+              version = lib.mkOption {
+                type = lib.types.str;
+                description = "Version of plugin";
               };
 
-              config =
+              name = lib.mkOption {
+                type = lib.types.str;
+                description = "Name of plugin";
+              };
 
-                {
-                  name = lib.mkIf (options.pname.isDefined && options.version.isDefined) (
-                    lib.mkDefault "${config.pname}-${config.version}"
-                  );
+              src = lib.mkOption {
+                type = lib.types.pathInStore;
+                description = "Path in store to plugin";
+              };
 
-                  outPath = lib.mkIf (options.src.isDefined) (lib.mkDefault (config.src));
-                };
-            }
-          )
+              outPath = lib.mkOption {
+                type = lib.types.pathInStore;
+                description = "Path in store to plugin";
+              };
+
+              dependencies = lib.mkOption {
+                type = lib.types.listOf pluginType;
+                description = "Dependencies of plugin";
+                default = [ ];
+              };
+
+              python3Dependencies = lib.mkOption {
+                type = lib.types.functionTo (lib.types.listOf lib.types.package);
+                description = "A function which returns a list of extra needed python3 packages";
+                default = _: [ ];
+              };
+
+              optional = lib.mkOption {
+                type = lib.types.bool;
+                description = "Wether to not load plugin automatically at startup";
+                default = false;
+              };
+
+              plugin = lib.mkOption {
+                apply = _: ''
+                  The "plugin" attribute of plugins is not supported by mnw
+                  please remove it from plugin: ${config.name}
+                '';
+              };
+              config = lib.mkOption {
+                apply = _: ''
+                  The "config" attribute of plugins is not supported by mnw
+                  please remove it from plugin: ${config.name}
+                '';
+              };
+            };
+
+            config =
+
+              {
+                name = lib.mkIf (options.pname.isDefined && options.version.isDefined) (
+                  lib.mkDefault "${config.pname}-${config.version}"
+                );
+
+                outPath = lib.mkIf options.src.isDefined (lib.mkDefault config.src);
+              };
+          }
         );
       in
 
