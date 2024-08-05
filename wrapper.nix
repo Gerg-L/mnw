@@ -144,7 +144,7 @@ lib.makeOverridable (
         PLUGIN_DIR=$(basename ''${ppath::-4})
         ln -snf "$ppath" "$PLUGIN_DIR"
         done
-        if [ -n ls $out/doc ]; then
+        if [ -n "$(ls $out/doc)" ]; then
           ${lib.getExe neovim} -N -u NONE -i NONE -n -E -s -V1 -c "helptags $out/doc" -c "quit!"
         fi
         popd
