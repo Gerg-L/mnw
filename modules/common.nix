@@ -1,24 +1,34 @@
 { lib, pkgs, ... }:
+let
+  inherit (lib) types;
+  enabledOption =
+    x:
+    lib.mkEnableOption x
+    // {
+      default = true;
+      example = false;
+    };
+in
 {
-
   options.programs.mnw = {
     enable = lib.mkEnableOption "mnw (Minimal Neovim Wrapper)";
 
     finalPackage = lib.mkOption {
-      type = lib.types.package;
+      type = types.package;
       readOnly = true;
     };
+
     neovim = lib.mkPackageOption pkgs "neovim-unwrapped" { };
 
     appName = lib.mkOption {
-      type = lib.types.str;
-      default = "nvim";
+      type = types.str;
+      default = "mnw";
       description = "What to set $NVIM_APPNAME to";
       example = "gerg";
     };
 
     luaFiles = lib.mkOption {
-      type = lib.types.listOf lib.types.pathInStore;
+      type = types.listOf types.pathInStore;
       default = [ ];
       description = "lua config files to load at startup";
       example = ''
@@ -31,7 +41,7 @@
     };
 
     initLua = lib.mkOption {
-      type = lib.types.lines;
+      type = types.lines;
       default = "";
       description = "lua config text to load at startup";
       example = ''
@@ -40,7 +50,7 @@
     };
 
     vimlFiles = lib.mkOption {
-      type = lib.types.listOf lib.types.pathInStore;
+      type = types.listOf types.pathInStore;
       default = [ ];
       description = "VimL config files to load at startup";
       example = ''
@@ -53,7 +63,7 @@
     };
 
     initViml = lib.mkOption {
-      type = lib.types.lines;
+      type = types.lines;
       default = "";
       description = "VimL config text to load at startup";
       example = ''
@@ -64,21 +74,15 @@
     viAlias = lib.mkEnableOption "symlinking nvim to vi";
     vimAlias = lib.mkEnableOption "symlinking nvim to vim";
 
-    withRuby = (lib.mkEnableOption "configuring and enabling the ruby provider") // {
-      default = true;
-      example = false;
-    };
+    withRuby = enabledOption "configuring and enabling the ruby provider";
 
     withNodeJs = lib.mkEnableOption "configuring and enabling the node provider";
     withPerl = lib.mkEnableOption "configuring and enabling the perl provider";
 
-    withPython3 = (lib.mkEnableOption "configuring and enabling the python3 provider") // {
-      default = true;
-      example = false;
-    };
+    withPython3 = enabledOption "configuring and enabling the python3 provider";
 
     extraPython3Packages = lib.mkOption {
-      type = lib.types.functionTo (lib.types.listOf lib.types.package);
+      type = types.functionTo (types.listOf types.package);
       default = _: [ ];
       description = "A function which returns a list of extra needed python3 packages";
       example = ''
@@ -87,7 +91,7 @@
     };
 
     extraLuaPackages = lib.mkOption {
-      type = lib.types.functionTo (lib.types.listOf lib.types.package);
+      type = types.functionTo (types.listOf types.package);
       default = _: [ ];
       description = "A function which returns a list of extra needed lua packages";
       example = ''
@@ -95,54 +99,52 @@
       '';
     };
 
-    loadDefaultRC = lib.mkEnableOption "loading nix external neovim configuration (~/.config/$NVIM_APPNAME/init.lua usually)";
-
     plugins =
       let
-        pluginType = lib.types.submodule (
+        pluginType = types.submodule (
           { config, options, ... }:
           {
-            freeformType = lib.types.attrs;
+            freeformType = types.attrs;
 
             options = {
               pname = lib.mkOption {
-                type = lib.types.str;
+                type = types.str;
                 description = "Versionless name of plugin";
               };
               version = lib.mkOption {
-                type = lib.types.str;
+                type = types.str;
                 description = "Version of plugin";
               };
 
               name = lib.mkOption {
-                type = lib.types.str;
+                type = types.str;
                 description = "Name of plugin";
               };
 
               src = lib.mkOption {
-                type = lib.types.pathInStore;
+                type = types.pathInStore;
                 description = "Path in store to plugin";
               };
 
               outPath = lib.mkOption {
-                type = lib.types.pathInStore;
+                type = types.pathInStore;
                 description = "Path in store to plugin";
               };
 
               dependencies = lib.mkOption {
-                type = lib.types.listOf pluginType;
+                type = types.listOf pluginType;
                 description = "Dependencies of plugin";
                 default = [ ];
               };
 
               python3Dependencies = lib.mkOption {
-                type = lib.types.functionTo (lib.types.listOf lib.types.package);
+                type = types.functionTo (types.listOf types.package);
                 description = "A function which returns a list of extra needed python3 packages";
                 default = _: [ ];
               };
 
               optional = lib.mkOption {
-                type = lib.types.bool;
+                type = types.bool;
                 description = "Wether to not load plugin automatically at startup";
                 default = false;
               };
@@ -172,18 +174,25 @@
               };
           }
         );
+
+        pathCheck =
+          x:
+          !lib.isDerivation x
+          && (lib.isStringLike x && builtins.match "${builtins.storeDir}/[^.].*" (toString x) != null);
+
       in
 
       lib.mkOption {
-        type = lib.types.listOf (
-          lib.types.oneOf [
+        type = types.listOf (
+          types.oneOf [
             (lib.mkOptionType {
-              name = "pathLiteral";
+              name = "path";
               description = "literal path";
               descriptionClass = "noun";
-              check = builtins.isPath;
+              check = pathCheck;
               merge = lib.mergeEqualOption;
             })
+
             pluginType
           ]
         );
@@ -197,10 +206,10 @@
         '';
         apply = map (
           x:
-          if builtins.isPath x then
+          if pathCheck x then
             {
 
-              name = "plugin-${builtins.baseNameOf x}";
+              name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
               python3Dependencies = _: [ ];
               outPath = x;
             }
@@ -209,8 +218,8 @@
         );
       };
 
-    extraBinPath = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
+     extraBinPath = lib.mkOption {
+      type = types.listOf types.package;
       default = [ ];
       description = "Extra packages to be put in neovim's PATH";
       example = ''

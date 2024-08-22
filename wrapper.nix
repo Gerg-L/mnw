@@ -34,20 +34,14 @@ lib.makeOverridable (
     luaFiles,
     initViml,
     initLua,
-    loadDefaultRC,
     appName,
   }:
   let
-    splitPlugins =
-      let
-        partitioned = lib.partition (x: x.optional or false) plugins;
-      in
-      {
-        start = partitioned.wrong;
-        opt = partitioned.right;
-      };
+    splitPlugins = lib.partition (x: x.optional or false) plugins;
 
-    allPlugins =
+    optPlugins = splitPlugins.right;
+
+    startPlugins =
       let
         findDependenciesRecursively =
           let
@@ -56,57 +50,68 @@ lib.makeOverridable (
           in
           lib.concatMap transitiveClosure;
       in
-      (findDependenciesRecursively splitPlugins.start)
-      ++ (lib.subtractLists splitPlugins.opt (findDependenciesRecursively splitPlugins.opt));
+      (findDependenciesRecursively splitPlugins.wrong)
+      /*
+        Gross edge case of optional plugin's
+        dependency being loaded non-optionally
+        only nixpkgs plugins have dependencies though
+        so it should be okay
+      */
+      ++ (lib.subtractLists optPlugins (findDependenciesRecursively optPlugins));
 
     allPython3Dependencies =
       ps:
-      lib.pipe allPlugins [
+      lib.pipe startPlugins [
         (lib.concatMap (plugin: (plugin.python3Dependencies or (_: [ ])) ps))
         lib.unique
       ];
+    generatedInitLua =
+      let
+        blah =
+          lib.pipe
+            {
+              node = withNodeJs;
+              python = false;
+              python3 = withPython3;
+              ruby = withRuby;
+              perl = withPerl;
+            }
+            [
+              (lib.mapAttrsToList (
+                prog: withProg:
+                if withProg then
+                  "vim.g.${prog}_host_prog='${providers}/bin/neovim-${prog}-host'"
+                else
+                  "vim.g.loaded_${prog}_provider=0"
+              ))
+              lib.concatLines
+              (writeText "providers.lua")
+            ];
+      in
+      lib.pipe
+        [
+          [ blah ]
+          vimlFiles
+          luaFiles
+          (lib.optional (initViml != "") (writeText "init.vim" initViml))
+          (lib.optional (initLua != "") (writeText "init.lua" initLua))
+        ]
+        [
+          lib.concatLists
+          (map (x: "vim.cmd('source ${x}')"))
+          lib.concatLines
+          (writeTextDir "init.lua")
+        ];
 
-    userConfig = writeTextDir "pack/generated/start/userConfig/plugin/init.lua" (
-      (lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
-        vimlFiles ++ lib.optional (initViml != "") (writeText "init.vim" initViml)
-      ))
-      + (lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
-        lib.optional (initLua != "") (writeText "init.lua" initLua) ++ luaFiles
-      ))
-    );
-
-    genConfig = writeTextDir "pack/generated/start/genConfig/plugin/init.lua" (
-      lib.concatLines (
-        lib.mapAttrsToList
-          (
-            prog: withProg:
-            if withProg then
-              "vim.g.${prog}_host_prog='${providers}/bin/neovim-${prog}-host'"
-            else
-              "vim.g.loaded_${prog}_provider=0"
-          )
-          {
-            node = withNodeJs;
-            python = false;
-            python3 = withPython3;
-            ruby = withRuby;
-            perl = withPerl;
-          }
-      )
-    );
-
-    configDir = buildEnv {
+    builtConfigDir = buildEnv {
       name = "neovim-pack-dir";
       paths =
         let
-          splitStart = fromNixpkgs allPlugins;
-          splitOpt = fromNixpkgs splitPlugins.opt;
-          fromNixpkgs = lib.partition (x: x.vimPlugin or false);
           vimFarm =
-            dir: name: plugins:
-            linkFarm "${name}-packdir" (
+            name: plugins:
+            linkFarm "${name}-configdir" (
               map (drv: {
-                name = "${dir}/${name}/${
+                name = "pack/mnw/${name}/${
                   if (drv ? pname && (builtins.tryEval drv.pname).success) then drv.pname else drv.name
                 }";
                 path = drv;
@@ -114,15 +119,10 @@ lib.makeOverridable (
             );
         in
         [
-          userConfig
-          genConfig
-          (vimFarm "pack/mnw" "start" splitStart.wrong)
-          (vimFarm "pack/mnw" "opt" splitOpt.wrong)
-
-          (vimFarm "pack/nixpkgs" "start" splitStart.right)
-          (vimFarm "pack/nixpkgs" "opt" splitOpt.right)
+          generatedInitLua
+          (vimFarm "start" startPlugins)
+          (vimFarm "opt" optPlugins)
         ]
-
         ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
           runCommand "vim-python3-deps" { } ''
             mkdir -p $out/pack/mnw/start/__python3_dependencies
@@ -141,13 +141,20 @@ lib.makeOverridable (
         pushd $out/doc
         for ppath in ../pack/mnw/*/*/doc
         do
-        PLUGIN_DIR=$(basename ''${ppath::-4})
-        ln -snf "$ppath" "$PLUGIN_DIR"
+        if [ ! -e "$ppath/tags" ]; then
+          PLUGIN_DIR=$(basename ''${ppath::-4})
+          ln -snf "$ppath" "$PLUGIN_DIR"
+        fi
         done
         if [ -n "$(ls $out/doc)" ]; then
-          ${lib.getExe neovim} -N -u NONE -i NONE -n -E -s -V1 -c "helptags $out/doc" -c "quit!"
+          ${lib.getExe neovim} -es --headless -N -u NONE -i NONE -n -V1 \
+            -c "helptags $out/doc" -c "quit!"
         fi
         popd
+
+        if [ ! -e "$out/init.lua" ]; then
+          touch "$out/init.lua"
+        fi
       '';
     };
 
@@ -218,23 +225,21 @@ lib.makeOverridable (
         "--set-default"
         "NVIM_APPNAME"
         appName
+
+        "--add-flags"
+        "--cmd 'set packpath^=${builtConfigDir} | set rtp^=${builtConfigDir}'"
+
+        "--add-flags"
+        "-u '${builtConfigDir}/init.lua'"
       ]
-      ++ (lib.optionals (!loadDefaultRC) [
-        "--add-flags"
-        "-u NORC"
-      ])
-      ++ (lib.optionals (plugins != [ ]) [
-        "--add-flags"
-        "--cmd 'set packpath^=${configDir} | set rtp^=${configDir}'"
-      ])
       ++ wrapperArgs
     );
 
   in
 
   stdenvNoCC.mkDerivation {
-    pname = "neovim";
-    version = lib.getVersion neovim;
+    pname = "mnw";
+    version = "${appName}-${lib.getVersion neovim}";
 
     nativeBuildInputs = [
       makeWrapper
@@ -247,42 +252,44 @@ lib.makeOverridable (
     installPhase = ''
       runHook preInstall
 
+      # symlinkJoin
       mkdir -p $out
-
       lndir -silent ${neovim} $out
 
-      echo "Looking for lua dependencies..."
+      # Add too LUA_PATH/LUA_CPATH using nixpkgs thing
       source ${neovim.lua}/nix-support/utils.sh
-
-      _addToLuaPath "${configDir}"
-
-      echo "LUA_PATH towards the end of packdir: $LUA_PATH"
+      _addToLuaPath "${builtConfigDir}"
 
       wrapProgram $out/bin/nvim ${wrapperArgsStr} \
         --prefix LUA_PATH ';' "$LUA_PATH" \
         --prefix LUA_CPATH ';' "$LUA_CPATH"
 
       ${lib.optionalString vimAlias "ln -s $out/bin/nvim $out/bin/vim"}
-
       ${lib.optionalString viAlias "ln -s $out/bin/nvim $out/bin/vi"}
 
       runHook postInstall
     '';
 
+    # For debugging
     passthru = {
-      inherit configDir;
+      inherit builtConfigDir;
     };
 
-    meta =
-      (builtins.removeAttrs neovim.meta [
-        "position"
-        "outputsToInstall"
-      ])
-      // {
-        # To prevent builds on hydra
-        hydraPlatforms = [ ];
-        # prefer wrapper over the package
-        priority = (neovim.meta.priority or 0) - 1;
-      };
+    # From nixpkgs
+    meta = {
+      inherit (neovim.meta)
+        description
+        longDescription
+        homepage
+        mainProgram
+        license
+        maintainers
+        platforms
+        ;
+      # To prevent builds on hydra
+      hydraPlatforms = [ ];
+      # prefer wrapper over the package
+      priority = (neovim.meta.priority or 0) - 1;
+    };
   }
 )

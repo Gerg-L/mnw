@@ -67,13 +67,28 @@ to not install by default use the `.dontInstall` module instead and add `config.
 # Ensure you're using the -unwrapped variant
 neovim = pkgs.neovim-unwrapped;
 
+#
+# These are all put into a generated init.lua
+#
+
+# Lua files
+luaFiles = [ ];
+# Lua string
+initLua = ''
+  require("myConfig")
+'';
+# Vimscript files
+vimlFiles = [ ];
+# Vimscript string
+initViml = "";
+
 plugins = [
-  # You can pass a directory
-  # and use it just like it's
-  # ~/.config/nvim
-  ./myNeovimConfig
-  # and you can pass vimPlugins from nixpkgs
+  # you can pass vimPlugins from nixpkgs
   pkgs.vimPlugins.fzf-lua
+  # You can pass a directory
+  # this is recommend for using your own
+  # ftplugins and treesitter queries
+  ./myNeovimConfig
 ];
 # I recommend using plugins from a npins source
 # to track the newest commits of a plugin
@@ -83,22 +98,10 @@ plugins = [
 extraBinPath = [ pkgs.nil ];
 
 # Sets NVIMAPP_NAME
-appName = "nvim";
+appName = "mnw";
 
 # Extra arguments passed to makeWrapper
 wrapperArgs = [ ];
-
-# Whether to load ~/.config/nvim/init.lua
-loadDefaultRC = false;
-
-# Lua init files to load
-luaFiles = [ ];
-# Lua init string to load
-initLua = "";
-# VimL init files to load
-vimlFiles = [ ];
-# VimLinit string to load
-initViml = "";
 
 # Symlink vi/vim to nvim
 viAlias = false;
