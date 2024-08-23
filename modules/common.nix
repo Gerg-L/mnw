@@ -175,11 +175,6 @@ in
           }
         );
 
-        pathCheck =
-          x:
-          !lib.isDerivation x
-          && (lib.isStringLike x && builtins.match "${builtins.storeDir}/[^.].*" (toString x) != null);
-
       in
 
       lib.mkOption {
@@ -189,7 +184,7 @@ in
               name = "path";
               description = "literal path";
               descriptionClass = "noun";
-              check = pathCheck;
+              check = builtins.isPath;
               merge = lib.mergeEqualOption;
             })
 
@@ -206,7 +201,7 @@ in
         '';
         apply = map (
           x:
-          if pathCheck x then
+          if builtins.isPath x then
             {
 
               name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
@@ -218,7 +213,7 @@ in
         );
       };
 
-     extraBinPath = lib.mkOption {
+    extraBinPath = lib.mkOption {
       type = types.listOf types.package;
       default = [ ];
       description = "Extra packages to be put in neovim's PATH";
