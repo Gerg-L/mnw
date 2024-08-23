@@ -46,21 +46,18 @@ lib.makeOverridable (
         findDependenciesRecursively =
           let
             transitiveClosure =
-              plugin: [ plugin ] ++ lib.unique (lib.concatMap transitiveClosure plugin.dependencies or [ ]);
+              plugin: [ plugin ] ++ lib.concatMap transitiveClosure plugin.dependencies or [ ];
           in
           lib.concatMap transitiveClosure;
       in
-      lib.unique (
-
-        /*
-          Gross edge case of optional plugin's
-          dependency being loaded non-optionally
-          only nixpkgs plugins have dependencies though
-          so it should be okay
-        */
-        lib.subtractLists optPlugins (
-          (findDependenciesRecursively splitPlugins.wrong) ++ (findDependenciesRecursively optPlugins)
-        )
+      /*
+        Gross edge case of optional plugin's
+        dependency being loaded non-optionally
+        only nixpkgs plugins have dependencies though
+        so it should be okay
+      */
+      lib.subtractLists optPlugins (
+        (findDependenciesRecursively splitPlugins.wrong) ++ (findDependenciesRecursively optPlugins)
       );
 
     allPython3Dependencies =
