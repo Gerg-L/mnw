@@ -67,7 +67,7 @@ lib.makeOverridable (
       ];
     generatedInitLua =
       let
-        blah =
+        providerLua =
           lib.pipe
             {
               node = withNodeJs;
@@ -90,7 +90,7 @@ lib.makeOverridable (
       in
       lib.pipe
         [
-          [ blah ]
+          [ providerLua ]
           vimlFiles
           luaFiles
           (lib.optional (initViml != "") (writeText "init.vim" initViml))
