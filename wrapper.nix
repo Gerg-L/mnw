@@ -261,8 +261,10 @@ lib.makeOverridable (
       lndir -silent ${neovim} $out
 
       # Add too LUA_PATH/LUA_CPATH using nixpkgs thing
-      source ${neovim.lua}/nix-support/utils.sh
-      _addToLuaPath "${builtConfigDir}"
+      source '${neovim.lua}/nix-support/utils.sh'
+      if declare -f -F "_addToLuaPath" > /dev/null; then
+        _addToLuaPath "${builtConfigDir}"
+      fi
 
       wrapProgram $out/bin/nvim ${wrapperArgsStr} \
         --prefix LUA_PATH ';' "$LUA_PATH" \
