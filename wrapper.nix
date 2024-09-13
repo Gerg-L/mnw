@@ -292,7 +292,7 @@ lib.makeOverridable (
       # To prevent builds on hydra
       hydraPlatforms = [ ];
       # prefer wrapper over the package
-      priority = (neovim.meta.priority or 0) - 1;
+      priority = (neovim.meta.priority or 0) - 2;
     };
   }
 )
