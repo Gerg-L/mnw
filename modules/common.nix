@@ -14,11 +14,17 @@ in
     enable = lib.mkEnableOption "mnw (Minimal Neovim Wrapper)";
 
     finalPackage = lib.mkOption {
-      type = types.package;
+      type = types.nullOr types.package;
       readOnly = true;
+      default = null;
     };
 
-    neovim = lib.mkPackageOption pkgs "neovim-unwrapped" { };
+    neovim = lib.mkOption {
+      type = types.package;
+      default = pkgs.neovim-unwrapped;
+      description = "The neovim package to use. Must be unwrapped";
+      example = "inputs.neovim-nightly-overlay.packages.\${pkgs.stdenv.system}.default";
+    };
 
     appName = lib.mkOption {
       type = types.str;
