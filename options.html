@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ <title>Appendix A. Minimal Neovim Wrapper Options</title>
+
+
+ <meta name="generator" content="nixos-render-docs" />
+ <link rel="home" href="index.xhtml" title="mnw manual" />
+ <link rel="up" href="index.xhtml" title="mnw manual" /><link rel="prev" href="index.xhtml" title="mnw manual" />
+ </head>
+ <body>
+  <div class="navheader">
+   <table width="100%" summary="Navigation header">
+    <tr>
+    <th colspan="3" align="center">Appendix A. Minimal Neovim Wrapper Options</th>
+    </tr>
+    <tr>
+    <td width="20%" align="left"><a accesskey="p" href="index.xhtml">Prev</a>&nbsp;</td>
+    <th width="60%" align="center">&nbsp;</th>
+    <td width="20%" align="right">&nbsp;</td>
+    </tr>
+   </table>
+   <hr />
+  </div><div class="appendix"> <div class="titlepage">  <div>   <div>    <h1 id="ch-options" class="title" >Appendix A. Minimal Neovim Wrapper Options   </h1>  </div> </div></div><p>Below are the options provided by mnw provided in no particular order.</p><div class="variablelist">
+<a id="mnw-options"></a>
+ <dl class="variablelist">
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.enable"></a><a class="term" href="options.html#opt-programs.mnw.enable"><code class="option">programs.mnw.enable</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Whether to enable mnw (Minimal Neovim Wrapper).</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+boolean</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">false</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">true</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.appName"></a><a class="term" href="options.html#opt-programs.mnw.appName"><code class="option">programs.mnw.appName</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>What to set $NVIM_APPNAME to</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+string</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">&quot;mnw&quot;</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">&quot;gerg&quot;</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.extraBinPath"></a><a class="term" href="options.html#opt-programs.mnw.extraBinPath"><code class="option">programs.mnw.extraBinPath</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Extra packages to be put in neovim’s PATH</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+list of package</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">[ ]</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  [
+    pkgs.rg
+    pkgs.fzf
+  ]
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.extraLuaPackages"></a><a class="term" href="options.html#opt-programs.mnw.extraLuaPackages"><code class="option">programs.mnw.extraLuaPackages</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>A function which returns a list of extra needed lua packages</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+function that evaluates to a(n) list of package</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">&lt;function&gt;</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  ps: [ ps.jsregexp ]
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.extraPython3Packages"></a><a class="term" href="options.html#opt-programs.mnw.extraPython3Packages"><code class="option">programs.mnw.extraPython3Packages</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>A function which returns a list of extra needed python3 packages</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+function that evaluates to a(n) list of package</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">&lt;function&gt;</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  py: [ py.pybtex ]
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.finalPackage"></a><a class="term" href="options.html#opt-programs.mnw.finalPackage"><code class="option">programs.mnw.finalPackage</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>This option has no description.</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+null or package <span class="emphasis"><em>(read only)</em></span></p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">null</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.initLua"></a><a class="term" href="options.html#opt-programs.mnw.initLua"><code class="option">programs.mnw.initLua</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>lua config text to load at startup</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+strings concatenated with “\n”</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">&quot;&quot;</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  print(&#x27;hello world&#x27;)
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.initViml"></a><a class="term" href="options.html#opt-programs.mnw.initViml"><code class="option">programs.mnw.initViml</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>VimL config text to load at startup</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+strings concatenated with “\n”</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">&quot;&quot;</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  echomsg &#x27;hello world&#x27;
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.luaFiles"></a><a class="term" href="options.html#opt-programs.mnw.luaFiles"><code class="option">programs.mnw.luaFiles</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>lua config files to load at startup</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+list of path in the Nix store</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">[ ]</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  [
+    (pkgs.writeText &quot;init.lua&quot; &#x27;&#x27;&#x27;
+      print(&#x27;hello world&#x27;)
+    &#x27;&#x27;&#x27;)
+  ]
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.neovim"></a><a class="term" href="options.html#opt-programs.mnw.neovim"><code class="option">programs.mnw.neovim</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>The neovim package to use. Must be unwrapped</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+package</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">&lt;derivation neovim-unwrapped-0.10.1&gt;</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">&quot;inputs.neovim-nightly-overlay.packages.\${pkgs.stdenv.system}.default&quot;</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.plugins"></a><a class="term" href="options.html#opt-programs.mnw.plugins"><code class="option">programs.mnw.plugins</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>A list of plugins to load</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+list of (literal path or (attribute set))</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">[ ]</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  [
+    pkgs.vimPlugins.fzf-lua;
+    pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+  ]
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.viAlias"></a><a class="term" href="options.html#opt-programs.mnw.viAlias"><code class="option">programs.mnw.viAlias</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Whether to enable symlinking nvim to vi.</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+boolean</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">false</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">true</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.vimAlias"></a><a class="term" href="options.html#opt-programs.mnw.vimAlias"><code class="option">programs.mnw.vimAlias</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Whether to enable symlinking nvim to vim.</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+boolean</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">false</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">true</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.vimlFiles"></a><a class="term" href="options.html#opt-programs.mnw.vimlFiles"><code class="option">programs.mnw.vimlFiles</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>VimL config files to load at startup</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+list of path in the Nix store</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">[ ]</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  [
+    (pkgs.writeText &quot;init.vim&quot; &#x27;&#x27;&#x27;
+      echomsg &#x27;hello world&#x27;
+    &#x27;&#x27;&#x27;)
+  ]
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.withNodeJs"></a><a class="term" href="options.html#opt-programs.mnw.withNodeJs"><code class="option">programs.mnw.withNodeJs</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Whether to enable configuring and enabling the node provider.</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+boolean</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">false</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">true</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.withPerl"></a><a class="term" href="options.html#opt-programs.mnw.withPerl"><code class="option">programs.mnw.withPerl</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Whether to enable configuring and enabling the perl provider.</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+boolean</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">false</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">true</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.withPython3"></a><a class="term" href="options.html#opt-programs.mnw.withPython3"><code class="option">programs.mnw.withPython3</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Whether to enable configuring and enabling the python3 provider.</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+boolean</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">true</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">false</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.withRuby"></a><a class="term" href="options.html#opt-programs.mnw.withRuby"><code class="option">programs.mnw.withRuby</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>Whether to enable configuring and enabling the ruby provider.</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+boolean</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">true</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span>
+<code class="literal">false</code></p>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+<dt>
+ <span class="term">
+ <a id="opt-programs.mnw.wrapperArgs"></a><a class="term" href="options.html#opt-programs.mnw.wrapperArgs"><code class="option">programs.mnw.wrapperArgs</code>
+  </a>
+ </span>
+</dt>
+<dd>
+<p>A list of arguments to be passed to makeWrapper</p>
+
+<p><span class="emphasis"><em>Type:</em></span>
+list of string</p>
+
+<p><span class="emphasis"><em>Default:</em></span>
+<code class="literal">[ ]</code></p>
+
+<p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
+  [
+    &quot;--set-default&quot;
+    &quot;FZF_DEFAULT_OPTS&quot;
+    &quot;--layout=reverse --inline-info&quot;
+  ];
+&#x27;&#x27;
+</code></pre>
+
+<p><span class="emphasis"><em>Declared by:</em></span></p>
+<table border="0" summary="Simple list" class="simplelist">
+<tr><td>
+<code class="filename"><a class="filename"  href="file:///nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix" target="_top">
+/nix/store/khmmvpk7qwx3sxymq8mba56cw14jwcn5-source/modules/common.nix
+</a></code>
+</td></tr>
+</table>
+</dd>
+ </dl>
+</div>
+</div>  <div class="navfooter">
+   <hr />
+   <table width="100%" summary="Navigation footer">
+    <tr>
+    <td width="40%" align="left"><a accesskey="p" href="index.xhtml">Prev</a>&nbsp;</td>
+    <td width="20%" align="center">&nbsp;</td>
+    <td width="40%" align="right">&nbsp;</td>
+    </tr>
+    <tr>
+     <td width="40%" align="left" valign="top">mnw manual&nbsp;</td>
+     <td width="20%" align="center"><a accesskey="h" href="index.xhtml">Home</a></td>
+     <td width="40%" align="right" valign="top">&nbsp;</td>
+    </tr>
+   </table>
+  </div>
+ </body>
+</html>
