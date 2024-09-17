@@ -1,4 +1,4 @@
-name: deploy-docs
+name: "deploy-docs"
 on:
   workflow_dispatch:
   push:
