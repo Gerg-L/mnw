@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - master 
     paths:
       # build the manuals only when docs directory is updated
       - docs/**
