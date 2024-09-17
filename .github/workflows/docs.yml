@@ -1,3 +1,4 @@
+name: deploy-docs
 on:
   workflow_dispatch:
   push:
