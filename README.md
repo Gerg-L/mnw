@@ -71,6 +71,8 @@ See the generated docs:
 
 [Simple NixOS example](examples/nixos)
 
+[Standalone, easy development](examples/easy-dev)
+
 [My Neovim flake](https://github.com/Gerg-L/nvim-flake)
 
 [NotAShelf](https://github.com/notashelf/nvf)
