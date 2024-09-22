@@ -51,7 +51,7 @@ in
       default = "";
       description = "lua config text to load at startup";
       example = ''
-        print('hello world')
+        require("myConfig")
       '';
     };
 
@@ -200,10 +200,35 @@ in
         default = [ ];
         description = "A list of plugins to load";
         example = ''
-          [
-            pkgs.vimPlugins.fzf-lua;
-            pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-          ]
+          # you can pass vimPlugins from nixpkgs
+          pkgs.vimPlugins.fzf-lua
+
+          # You can pass a directory
+          # this is recommend for using your own
+          # ftplugins and treesitter queries
+          ./myNeovimConfig
+
+          {
+            pname = "customPlugin";
+            version = "1";
+
+            src = pkgs.fetchFromGitHub {
+             owner = "";
+             repo = "";
+             ref = "";
+             hash = "";
+            };
+
+            # Whether to place plugin in /start or /opt
+            optional = false;
+
+            # Plugins can have other plugins as dependencies
+            # this is mainly used in nixpkgs
+            # avoid it if possible
+            dependencies = [];
+
+
+          }
         '';
         apply = map (
           x:

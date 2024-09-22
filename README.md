@@ -62,67 +62,18 @@ to not install by default use the `.dontInstall` module instead and add `config.
 
 ### Config Options
 
-```nix
-# The neovim package to wrap
-# Ensure you're using the -unwrapped variant
-neovim = pkgs.neovim-unwrapped;
+See the generated docs:
+<https://gerg-l.github.io/mnw/options.html>
 
-#
-# These are all put into a generated init.lua
-#
 
-# Lua files
-luaFiles = [ ];
-# Lua string
-initLua = ''
-  require("myConfig")
-'';
-# Vimscript files
-vimlFiles = [ ];
-# Vimscript string
-initViml = "";
 
-plugins = [
-  # you can pass vimPlugins from nixpkgs
-  pkgs.vimPlugins.fzf-lua
-  # You can pass a directory
-  # this is recommend for using your own
-  # ftplugins and treesitter queries
-  ./myNeovimConfig
-];
-# I recommend using plugins from a npins source
-# to track the newest commits of a plugin
-# check my config for an example
+### Examples
 
-# Lsps and fzf/rg go here and get appended to PATH
-extraBinPath = [ pkgs.nil ];
+[Simple NixOS example](examples/nixos)
 
-# Sets NVIMAPP_NAME
-appName = "mnw";
-
-# Extra arguments passed to makeWrapper
-wrapperArgs = [ ];
-
-# Symlink vi/vim to nvim
-viAlias = false;
-vimAlias = false;
-
-# Setup and enable providers
-withRuby = true;
-withNodeJs = false;
-withPerl = false;
-withPython3 = true;
-extraPython3Packages = p: [ ];
-
-# Extra luaPackages which may be needed by plugins
-extraLuaPackages = _: [ ];
-
-```
-
-### Full usage examples
-
-[Mine](https://github.com/Gerg-L/nvim-flake)
+[My Neovim flake](https://github.com/Gerg-L/nvim-flake)
 
 [NotAShelf](https://github.com/notashelf/nvf)
 
-If you would like your example here PR it
+Make a PR to add your config :D
+
