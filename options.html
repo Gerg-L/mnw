@@ -211,7 +211,7 @@ strings concatenated with “\n”</p>
 <code class="literal">&quot;&quot;</code></p>
 
 <p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
-  print(&#x27;hello world&#x27;)
+  require(&quot;myConfig&quot;)
 &#x27;&#x27;
 </code></pre>
 
@@ -329,10 +329,35 @@ list of (literal path or (attribute set))</p>
 <code class="literal">[ ]</code></p>
 
 <p><span class="emphasis"><em>Example:</em></span></p><pre><code class="programlisting">&#x27;&#x27;
-  [
-    pkgs.vimPlugins.fzf-lua;
-    pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-  ]
+  # you can pass vimPlugins from nixpkgs
+  pkgs.vimPlugins.fzf-lua
+  
+  # You can pass a directory
+  # this is recommend for using your own
+  # ftplugins and treesitter queries
+  ./myNeovimConfig
+  
+  {
+    pname = &quot;customPlugin&quot;;
+    version = &quot;1&quot;;
+  
+    src = pkgs.fetchFromGitHub {
+     owner = &quot;&quot;;
+     repo = &quot;&quot;;
+     ref = &quot;&quot;;
+     hash = &quot;&quot;;
+    };
+  
+    # Whether to place plugin in /start or /opt
+    optional = false;
+  
+    # Plugins can have other plugins as dependencies
+    # this is mainly used in nixpkgs
+    # avoid it if possible
+    dependencies = [];
+  
+  
+  }
 &#x27;&#x27;
 </code></pre>
 
