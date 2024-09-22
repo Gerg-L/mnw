@@ -15,7 +15,8 @@
   writeTextDir,
   lndir,
   stdenvNoCC,
-}:
+  callPackage,
+}@callPackageArgs:
 lib.makeOverridable (
   {
     neovim,
@@ -35,9 +36,15 @@ lib.makeOverridable (
     initViml,
     initLua,
     appName,
-  }:
+
+    devExcludedPlugins,
+    devPluginPaths,
+    dev ? false,
+  }@mnwWrapperArgs:
   let
-    splitPlugins = lib.partition (x: x.optional or false) plugins;
+    splitPlugins = lib.partition (x: x.optional or false) (
+      plugins ++ lib.optionals (!dev) devExcludedPlugins
+    );
 
     optPlugins = splitPlugins.right;
 
@@ -206,6 +213,7 @@ lib.makeOverridable (
       let
         luaEnv = neovim.lua.withPackages extraLuaPackages;
         inherit (neovim.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
+        paths = lib.concatStringsSep "," ([ builtConfigDir ] ++ lib.optionals dev devPluginPaths);
       in
       [
         "--prefix"
@@ -228,7 +236,7 @@ lib.makeOverridable (
         appName
 
         "--add-flags"
-        "--cmd 'set packpath^=${builtConfigDir} | set rtp^=${builtConfigDir}'"
+        "--cmd 'set packpath^=${paths} | set rtp^=${paths}'"
 
         "--add-flags"
         "-u '${builtConfigDir}/init.lua'"
@@ -274,9 +282,13 @@ lib.makeOverridable (
     '';
 
     # For debugging
-    passthru = {
-      inherit builtConfigDir;
-    };
+    passthru =
+      {
+        inherit builtConfigDir;
+      }
+      // lib.optionalAttrs (!dev) {
+        devMode = (callPackage ./wrapper.nix callPackageArgs) (mnwWrapperArgs // { dev = true; });
+      };
 
     # From nixpkgs
     meta = {

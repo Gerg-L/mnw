@@ -25,25 +25,23 @@
       packages.x86_64-linux =
         let
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          #
-          createMnw =
-            dev:
-            mnw.lib.wrap pkgs {
-              neovim = pkgs.neovim-unwrapped;
-              initLua = ''
-                require('myconfig')
-              '';
-              plugins = [ pkgs.vimPlugins.oil-nvim ] ++ lib.optional (!dev) ./nvim;
-              wrapperArgs = lib.optionals dev [
-                "--add-flags"
-                # You may want to change this to an absolute path
-                "--cmd 'set packpath^=./nvim|set rtp^=./nvim'"
-              ];
-            };
         in
         {
-          default = createMnw false;
-          dev = createMnw true;
+          default = mnw.lib.wrap pkgs {
+            neovim = pkgs.neovim-unwrapped;
+            initLua = ''
+              require('myconfig')
+            '';
+            devExcludedPlugins = [
+              ./nvim
+            ];
+            devPluginPaths = [
+              # This normally should be a absolute path
+              # here it'll only work from this directory
+              "./nvim"
+            ];
+            plugins = [ pkgs.vimPlugins.oil-nvim ];
+          };
         };
 
       devShells.x86_64-linux.default =
@@ -51,7 +49,7 @@
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in
         pkgs.mkShell {
-          packages = [ self.packages.x86_64-linux.dev ];
+          packages = [ self.packages.x86_64-linux.default.devMode ];
         };
 
     };

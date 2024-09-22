@@ -8,6 +8,144 @@ let
       default = true;
       example = false;
     };
+  pluginsOption =
+    let
+      pluginType = types.submodule (
+        { config, options, ... }:
+        {
+          freeformType = types.attrs;
+
+          options = {
+            pname = lib.mkOption {
+              type = types.str;
+              description = "Versionless name of plugin";
+            };
+            version = lib.mkOption {
+              type = types.str;
+              description = "Version of plugin";
+            };
+
+            name = lib.mkOption {
+              type = types.str;
+              description = "Name of plugin";
+            };
+
+            src = lib.mkOption {
+              type = types.pathInStore;
+              description = "Path in store to plugin";
+            };
+
+            outPath = lib.mkOption {
+              type = types.pathInStore;
+              description = "Path in store to plugin";
+            };
+
+            dependencies = lib.mkOption {
+              type = types.listOf pluginType;
+              description = "Dependencies of plugin";
+              default = [ ];
+            };
+
+            python3Dependencies = lib.mkOption {
+              type = types.functionTo (types.listOf types.package);
+              description = "A function which returns a list of extra needed python3 packages";
+              default = _: [ ];
+            };
+
+            optional = lib.mkOption {
+              type = types.bool;
+              description = "Wether to not load plugin automatically at startup";
+              default = false;
+            };
+
+            plugin = lib.mkOption {
+              apply = _: ''
+                The "plugin" attribute of plugins is not supported by mnw
+                please remove it from plugin: ${config.name}
+              '';
+            };
+            config = lib.mkOption {
+              apply = _: ''
+                The "config" attribute of plugins is not supported by mnw
+                please remove it from plugin: ${config.name}
+              '';
+            };
+          };
+
+          config =
+
+            {
+              name = lib.mkIf (options.pname.isDefined && options.version.isDefined) (
+                lib.mkDefault "${config.pname}-${config.version}"
+              );
+
+              outPath = lib.mkIf options.src.isDefined (lib.mkDefault config.src);
+            };
+        }
+      );
+
+    in
+    lib.mkOption {
+      type = types.listOf (
+        types.oneOf [
+          (lib.mkOptionType {
+            name = "path";
+            description = "literal path";
+            descriptionClass = "noun";
+            check = builtins.isPath;
+            merge = lib.mergeEqualOption;
+          })
+
+          pluginType
+        ]
+      );
+      default = [ ];
+      description = "A list of plugins to load";
+      example = ''
+        # you can pass vimPlugins from nixpkgs
+        pkgs.vimPlugins.fzf-lua
+
+        # You can pass a directory
+        # this is recommend for using your own
+        # ftplugins and treesitter queries
+        ./myNeovimConfig
+
+        {
+          pname = "customPlugin";
+          version = "1";
+
+          src = pkgs.fetchFromGitHub {
+           owner = "";
+           repo = "";
+           ref = "";
+           hash = "";
+          };
+
+          # Whether to place plugin in /start or /opt
+          optional = false;
+
+          # Plugins can have other plugins as dependencies
+          # this is mainly used in nixpkgs
+          # avoid it if possible
+          dependencies = [];
+
+
+        }
+      '';
+      apply = map (
+        x:
+        if builtins.isPath x then
+          {
+
+            name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
+            python3Dependencies = _: [ ];
+            outPath = x;
+          }
+        else
+          x
+      );
+    };
+
 in
 {
   options.programs.mnw = {
@@ -105,144 +243,32 @@ in
       '';
     };
 
-    plugins =
-      let
-        pluginType = types.submodule (
-          { config, options, ... }:
-          {
-            freeformType = types.attrs;
+    devExcludedPlugins = pluginsOption // {
+      description = ''
+        The same as 'plugins' except for when running in dev mode
+        add the absolute paths to 'devPluginPaths'
+      '';
+      example = ''
+        [
+          ./gerg
+        ]
+      '';
+    };
 
-            options = {
-              pname = lib.mkOption {
-                type = types.str;
-                description = "Versionless name of plugin";
-              };
-              version = lib.mkOption {
-                type = types.str;
-                description = "Version of plugin";
-              };
-
-              name = lib.mkOption {
-                type = types.str;
-                description = "Name of plugin";
-              };
-
-              src = lib.mkOption {
-                type = types.pathInStore;
-                description = "Path in store to plugin";
-              };
-
-              outPath = lib.mkOption {
-                type = types.pathInStore;
-                description = "Path in store to plugin";
-              };
-
-              dependencies = lib.mkOption {
-                type = types.listOf pluginType;
-                description = "Dependencies of plugin";
-                default = [ ];
-              };
-
-              python3Dependencies = lib.mkOption {
-                type = types.functionTo (types.listOf types.package);
-                description = "A function which returns a list of extra needed python3 packages";
-                default = _: [ ];
-              };
-
-              optional = lib.mkOption {
-                type = types.bool;
-                description = "Wether to not load plugin automatically at startup";
-                default = false;
-              };
-
-              plugin = lib.mkOption {
-                apply = _: ''
-                  The "plugin" attribute of plugins is not supported by mnw
-                  please remove it from plugin: ${config.name}
-                '';
-              };
-              config = lib.mkOption {
-                apply = _: ''
-                  The "config" attribute of plugins is not supported by mnw
-                  please remove it from plugin: ${config.name}
-                '';
-              };
-            };
-
-            config =
-
-              {
-                name = lib.mkIf (options.pname.isDefined && options.version.isDefined) (
-                  lib.mkDefault "${config.pname}-${config.version}"
-                );
-
-                outPath = lib.mkIf options.src.isDefined (lib.mkDefault config.src);
-              };
-          }
-        );
-
-      in
-
-      lib.mkOption {
-        type = types.listOf (
-          types.oneOf [
-            (lib.mkOptionType {
-              name = "path";
-              description = "literal path";
-              descriptionClass = "noun";
-              check = builtins.isPath;
-              merge = lib.mergeEqualOption;
-            })
-
-            pluginType
-          ]
-        );
-        default = [ ];
-        description = "A list of plugins to load";
-        example = ''
-          # you can pass vimPlugins from nixpkgs
-          pkgs.vimPlugins.fzf-lua
-
-          # You can pass a directory
-          # this is recommend for using your own
-          # ftplugins and treesitter queries
-          ./myNeovimConfig
-
-          {
-            pname = "customPlugin";
-            version = "1";
-
-            src = pkgs.fetchFromGitHub {
-             owner = "";
-             repo = "";
-             ref = "";
-             hash = "";
-            };
-
-            # Whether to place plugin in /start or /opt
-            optional = false;
-
-            # Plugins can have other plugins as dependencies
-            # this is mainly used in nixpkgs
-            # avoid it if possible
-            dependencies = [];
-
-
-          }
-        '';
-        apply = map (
-          x:
-          if builtins.isPath x then
-            {
-
-              name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
-              python3Dependencies = _: [ ];
-              outPath = x;
-            }
-          else
-            x
-        );
-      };
+    devPluginPaths = lib.mkOption {
+      type = types.listOf types.str;
+      default = "";
+      description = ''
+        The impure absolute paths to nvim plugins 
+        the relative paths of which should be in devExcludedPlugins 
+      '';
+      example = ''
+        [
+          "~/Projects/nvim-flake/gerg"
+        ]
+      '';
+    };
+    plugins = pluginsOption;
 
     extraBinPath = lib.mkOption {
       type = types.listOf types.package;
