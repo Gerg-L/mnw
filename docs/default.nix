@@ -46,12 +46,6 @@ let
     warningsAreErrors = false;
     options = filteredOptions;
     transformOptions =
-      let
-        gitHubDeclaration = user: repo: subpath: {
-          url = "https://github.com/${user}/${repo}/blob/master/${subpath}";
-          name = "<${repo}/${subpath}>";
-        };
-      in
       opt:
       opt
       // {
@@ -62,11 +56,16 @@ let
               toString
               (lib.removePrefix (toString ../.))
               (lib.removePrefix "/")
-              (gitHubDeclaration "Gerg-L" "mnw")
-
+              (x: {
+                url = "https://github.com/Gerg-L/mmw/blob/master/${x}";
+                name = "<nvf/${x}>";
+              })
             ]
           else if decl == "lib/modules.nix" then
-            gitHubDeclaration "NixOS" "nixpkgs" decl
+            {
+              url = "https://github.com/NixOS/nixpkgs/blob/master/${decl}";
+              name = "<nixpkgs/lib/modules.nix>";
+            }
           else
             decl
         ) opt.declarations;
