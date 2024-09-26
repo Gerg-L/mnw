@@ -152,7 +152,7 @@ in
     enable = lib.mkEnableOption "mnw (Minimal Neovim Wrapper)";
 
     finalPackage = lib.mkOption {
-      type = types.nullOr types.package;
+      type = types.package;
       readOnly = true;
     };
 
