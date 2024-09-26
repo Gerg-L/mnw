@@ -214,6 +214,9 @@ lib.makeOverridable (
         luaEnv = neovim.lua.withPackages extraLuaPackages;
         inherit (neovim.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
         paths = lib.concatStringsSep "," ([ builtConfigDir ] ++ lib.optionals dev devPluginPaths);
+
+        devAfterPaths = lib.concatStringsSep "," (map (p: p+"/after") devPluginPaths);
+        devAfterRtp = lib.optionalString dev " | set rtp+=${devAfterPaths}";
       in
       [
         "--prefix"
@@ -236,7 +239,7 @@ lib.makeOverridable (
         appName
 
         "--add-flags"
-        "--cmd 'set packpath^=${paths} | set rtp^=${paths}'"
+        "--cmd 'set packpath^=${paths} | set rtp^=${paths} ${devAfterRtp}'"
 
         "--add-flags"
         "-u '${builtConfigDir}/init.lua'"
