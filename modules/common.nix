@@ -154,7 +154,6 @@ in
     finalPackage = lib.mkOption {
       type = types.nullOr types.package;
       readOnly = true;
-      default = null;
     };
 
     neovim = lib.mkOption {
