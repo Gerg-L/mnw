@@ -12,7 +12,6 @@
   runCommand,
   buildEnv,
   writeText,
-  writeTextDir,
   lndir,
   stdenvNoCC,
   callPackage,
@@ -36,6 +35,7 @@ lib.makeOverridable (
     initViml,
     initLua,
     appName,
+    desktopEntry,
 
     devExcludedPlugins,
     devPluginPaths,
@@ -93,23 +93,28 @@ lib.makeOverridable (
                   "vim.g.loaded_${prog}_provider=0"
               ))
               lib.concatLines
-              (writeText "providers.lua")
             ];
+
+        sourceConfig = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
+          lib.concatLists [
+            vimlFiles
+            luaFiles
+            (lib.optional (initViml != "") (writeText "init.vim" initViml))
+            (lib.optional (initLua != "") (writeText "init.lua" initLua))
+          ]
+        );
+
+        luaEnv = neovim.lua.withPackages extraLuaPackages;
+        inherit (neovim.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
       in
-      lib.pipe
-        [
-          [ providerLua ]
-          vimlFiles
-          luaFiles
-          (lib.optional (initViml != "") (writeText "init.vim" initViml))
-          (lib.optional (initLua != "") (writeText "init.lua" initLua))
-        ]
-        [
-          lib.concatLists
-          (map (x: "vim.cmd('source ${x}')"))
-          lib.concatLines
-          (writeTextDir "init.lua")
-        ];
+
+      writeText "init.lua" ''
+        package.path = "${genLuaPathAbsStr luaEnv};LUA_PATH" .. package.path
+        package.cpath = "${genLuaCPathAbsStr luaEnv};LUA_CPATH" .. package.cpath
+
+        ${providerLua}
+        ${sourceConfig}
+      '';
 
     builtConfigDir = buildEnv {
       name = "neovim-pack-dir";
@@ -127,7 +132,6 @@ lib.makeOverridable (
             );
         in
         [
-          generatedInitLua
           (vimFarm "start" startPlugins)
           (vimFarm "opt" optPlugins)
         ]
@@ -160,9 +164,12 @@ lib.makeOverridable (
         fi
         popd
 
-        if [ ! -e "$out/init.lua" ]; then
-          touch "$out/init.lua"
+        source '${neovim.lua}/nix-support/utils.sh'
+        if declare -f -F "_addToLuaPath" > /dev/null; then
+          _addToLuaPath "$out"
         fi
+
+        sed "s/LUA_PATH/$LUA_PATH;/; s/LUA_CPATH/$LUA_CPATH;/" ${generatedInitLua} > $out/init.lua
       '';
     };
 
@@ -211,8 +218,6 @@ lib.makeOverridable (
 
     wrapperArgsStr = lib.escapeShellArgs (
       let
-        luaEnv = neovim.lua.withPackages extraLuaPackages;
-        inherit (neovim.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
         devAfterRtp =
           lib.optionalString (dev && devPluginPaths != [ ])
             "| set rtp+=${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}";
@@ -220,15 +225,6 @@ lib.makeOverridable (
 
       in
       [
-        "--prefix"
-        "LUA_PATH"
-        ";"
-        (genLuaPathAbsStr luaEnv)
-
-        "--prefix"
-        "LUA_CPATH"
-        ";"
-        (genLuaCPathAbsStr luaEnv)
 
         "--suffix"
         "PATH"
@@ -252,7 +248,7 @@ lib.makeOverridable (
 
   stdenvNoCC.mkDerivation {
     pname = "mnw";
-    version = "${appName}-${lib.getVersion neovim}";
+    version = lib.getVersion neovim;
 
     nativeBuildInputs = [
       makeWrapper
@@ -269,18 +265,11 @@ lib.makeOverridable (
       mkdir -p $out
       lndir -silent ${neovim} $out
 
-      # Add too LUA_PATH/LUA_CPATH using nixpkgs thing
-      source '${neovim.lua}/nix-support/utils.sh'
-      if declare -f -F "_addToLuaPath" > /dev/null; then
-        _addToLuaPath "${builtConfigDir}"
-      fi
-
-      wrapProgram $out/bin/nvim ${wrapperArgsStr} \
-        --prefix LUA_PATH ';' "$LUA_PATH" \
-        --prefix LUA_CPATH ';' "$LUA_CPATH"
+      wrapProgram $out/bin/nvim ${wrapperArgsStr}
 
       ${lib.optionalString vimAlias "ln -s $out/bin/nvim $out/bin/vim"}
       ${lib.optionalString viAlias "ln -s $out/bin/nvim $out/bin/vi"}
+      ${lib.optionalString (!desktopEntry) "rm -rf $out/share/applications"}
 
       runHook postInstall
     '';

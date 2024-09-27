@@ -293,5 +293,7 @@ in
         ];
       '';
     };
+
+    desktopEntry = enabledOption "neovim's desktop entry";
   };
 }
