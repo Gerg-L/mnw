@@ -110,8 +110,8 @@ lib.makeOverridable (
       in
 
       writeText "init.lua" ''
-        package.path = "${genLuaPathAbsStr luaEnv};$LUA_PATH;" .. package.path
-        package.cpath = "${genLuaCPathAbsStr luaEnv};$LUA_CPATH;" .. package.cpath
+        package.path = "${genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
+        package.cpath = "${genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath
 
         ${providerLua}
         ${sourceConfig}
