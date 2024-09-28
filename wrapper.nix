@@ -14,6 +14,7 @@
   writeText,
   lndir,
   stdenvNoCC,
+  envsubst,
   callPackage,
 }@callPackageArgs:
 lib.makeOverridable (
@@ -109,8 +110,8 @@ lib.makeOverridable (
       in
 
       writeText "init.lua" ''
-        package.path = "${genLuaPathAbsStr luaEnv};LUA_PATH" .. package.path
-        package.cpath = "${genLuaCPathAbsStr luaEnv};LUA_CPATH" .. package.cpath
+        package.path = "${genLuaPathAbsStr luaEnv};$LUA_PATH;" .. package.path
+        package.cpath = "${genLuaCPathAbsStr luaEnv};$LUA_CPATH;" .. package.cpath
 
         ${providerLua}
         ${sourceConfig}
@@ -118,6 +119,9 @@ lib.makeOverridable (
 
     builtConfigDir = buildEnv {
       name = "neovim-pack-dir";
+
+      nativeBuildInputs = [ envsubst ];
+
       paths =
         let
           vimFarm =
@@ -167,9 +171,14 @@ lib.makeOverridable (
         source '${neovim.lua}/nix-support/utils.sh'
         if declare -f -F "_addToLuaPath" > /dev/null; then
           _addToLuaPath "$out"
+          if [[ -v LUA_PATH ]]; then
+            LUA_PATH="$LUA_PATH;"
+          fi
+          if [[ -v LUA_CPATH ]]; then
+            LUA_CPATH="$LUA_CPATH;"
+          fi
         fi
-
-        sed "s/LUA_PATH/$LUA_PATH;/; s/LUA_CPATH/$LUA_CPATH;/" ${generatedInitLua} > $out/init.lua
+        envsubst < '${generatedInitLua}' > "$out/init.lua"
       '';
     };
 
