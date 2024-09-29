@@ -51,12 +51,22 @@ lib.makeOverridable (
 
     startPlugins =
       let
-        findDependenciesRecursively =
-          let
-            transitiveClosure =
-              plugin: [ plugin ] ++ lib.concatMap transitiveClosure plugin.dependencies or [ ];
-          in
-          lib.concatMap transitiveClosure;
+        /*
+          Stolen from viperML
+
+          Can't call lib.unique here because of module system errors
+          about the same speed as using concatMap but removes a let in
+        */
+        findDeps = builtins.foldl' (
+          x: y:
+          builtins.concatLists [
+            x
+            [
+              y
+            ]
+            (findDeps (y.dependencies or [ ]))
+          ]
+        ) [ ];
       in
       /*
         Gross edge case of optional plugin's
@@ -64,9 +74,7 @@ lib.makeOverridable (
         only nixpkgs plugins have dependencies though
         so it should be okay
       */
-      lib.subtractLists optPlugins (
-        (findDependenciesRecursively splitPlugins.wrong) ++ (findDependenciesRecursively optPlugins)
-      );
+      lib.subtractLists optPlugins ((findDeps splitPlugins.wrong) ++ (findDeps optPlugins));
 
     allPython3Dependencies =
       ps:
@@ -86,32 +94,42 @@ lib.makeOverridable (
               perl = withPerl;
             }
             [
-              (lib.mapAttrsToList (
+              (builtins.mapAttrs (
                 prog: withProg:
                 if withProg then
                   "vim.g.${prog}_host_prog='${providers}/bin/neovim-${prog}-host'"
                 else
                   "vim.g.loaded_${prog}_provider=0"
               ))
+              builtins.attrValues
               lib.concatLines
             ];
 
-        sourceConfig = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
-          lib.concatLists [
-            vimlFiles
-            luaFiles
-            (lib.optional (initViml != "") (writeText "init.vim" initViml))
-            (lib.optional (initLua != "") (writeText "init.lua" initLua))
-          ]
-        );
+        sourceConfig =
+          /*
+            This is the more verbose way to do this
+            the other way looks ugly
+          */
+          lib.pipe
+            [
+              vimlFiles
+              luaFiles
+              (lib.optional (initViml != "") (writeText "init.vim" initViml))
+              (lib.optional (initLua != "") (writeText "init.lua" initLua))
+            ]
+            [
+              lib.concatLists
+              (map (x: "vim.cmd('source ${x}')"))
+              lib.concatLines
+            ];
 
         luaEnv = neovim.lua.withPackages extraLuaPackages;
-        inherit (neovim.lua.pkgs.luaLib) genLuaPathAbsStr genLuaCPathAbsStr;
+        inherit (neovim.lua.pkgs) luaLib;
       in
 
       writeText "init.lua" ''
-        package.path = "${genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
-        package.cpath = "${genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath
+        package.path = "${luaLib.genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
+        package.cpath = "${luaLib.genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath
 
         ${providerLua}
         ${sourceConfig}
