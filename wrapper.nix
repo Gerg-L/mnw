@@ -1,6 +1,6 @@
 {
   lib,
-  makeWrapper,
+  makeBinaryWrapper,
   nodePackages,
   python3,
   perl,
@@ -125,12 +125,18 @@ lib.makeOverridable (
 
         luaEnv = neovim.lua.withPackages extraLuaPackages;
         inherit (neovim.lua.pkgs) luaLib;
+        devRtp = lib.optionalString (dev && devPluginPaths != [ ]) ''
+          vim.opt.runtimepath:prepend('${lib.concatStringsSep "," devPluginPaths}')
+          vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}')
+        '';
+
       in
 
       writeText "init.lua" ''
         package.path = "${luaLib.genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
         package.cpath = "${luaLib.genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath
-
+        vim.opt.packpath:append('$out')
+        ${devRtp}
         ${providerLua}
         ${sourceConfig}
       '';
@@ -230,7 +236,7 @@ lib.makeOverridable (
             ruby
           ];
 
-        nativeBuildInputs = [ makeWrapper ];
+        nativeBuildInputs = [ makeBinaryWrapper ];
 
         postBuild = ''
           ${lib.optionalString withPython3 ''
@@ -244,13 +250,7 @@ lib.makeOverridable (
       };
 
     wrapperArgsStr = lib.escapeShellArgs (
-      let
-        devAfterRtp =
-          lib.optionalString (dev && devPluginPaths != [ ])
-            "| set rtp+=${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}";
-        rtp = lib.concatStringsSep "," ([ builtConfigDir ] ++ lib.optionals dev devPluginPaths);
 
-      in
       [
 
         "--suffix"
@@ -263,10 +263,7 @@ lib.makeOverridable (
         appName
 
         "--add-flags"
-        "--cmd 'set packpath^=${builtConfigDir} | set rtp^=${rtp} ${devAfterRtp}'"
-
-        "--add-flags"
-        "-u '${builtConfigDir}/init.lua'"
+        "-u ${builtConfigDir}/init.lua"
       ]
       ++ wrapperArgs
     );
@@ -278,7 +275,7 @@ lib.makeOverridable (
     version = lib.getVersion neovim;
 
     nativeBuildInputs = [
-      makeWrapper
+      makeBinaryWrapper
       lndir
     ];
 
