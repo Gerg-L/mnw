@@ -106,22 +106,10 @@ lib.makeOverridable (
             ];
 
         sourceConfig =
-          /*
-            This is the more verbose way to do this
-            the other way looks ugly
-          */
-          lib.pipe
-            [
-              vimlFiles
-              luaFiles
-              (lib.optional (initViml != "") (writeText "init.vim" initViml))
-              (lib.optional (initLua != "") (writeText "init.lua" initLua))
-            ]
-            [
-              lib.concatLists
-              (map (x: "vim.cmd('source ${x}')"))
-              lib.concatLines
-            ];
+          lib.concatLines (
+            map    (x: "vim.cmd('source ${x}')") (lib.optional (initViml != "") (writeText "init.vim" initViml) ++ vimlFiles)
+            ++ map (x: "dofile('${x}')")         (lib.optional (initLua != "")  (writeText "init.lua" initLua)  ++ luaFiles)
+          );
 
         luaEnv = neovim.lua.withPackages extraLuaPackages;
         inherit (neovim.lua.pkgs) luaLib;
