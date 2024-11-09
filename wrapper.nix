@@ -281,6 +281,7 @@ lib.makeOverridable (
 
     dontUnpack = true;
     strictDeps = true;
+    dontRewriteSymlinks = true;
 
     installPhase = ''
       runHook preInstall
