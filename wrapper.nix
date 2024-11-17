@@ -136,6 +136,7 @@ lib.makeOverridable (
         package.path = "${luaLib.genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
         package.cpath = "${luaLib.genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath
         vim.opt.packpath:append('$out')
+        vim.opt.runtimepath:append('$out')
         ${devRtp}
         ${providerLua}
         ${sourceConfig}
