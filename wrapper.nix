@@ -84,6 +84,14 @@ lib.makeOverridable (
       ];
     generatedInitLua =
       let
+        luaEnv = neovim.lua.withPackages extraLuaPackages;
+        inherit (neovim.lua.pkgs) luaLib;
+
+        devRtp = lib.optionalString (dev && devPluginPaths != [ ]) ''
+          vim.opt.runtimepath:prepend('${lib.concatStringsSep "," devPluginPaths}')
+          vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}')
+        '';
+
         providerLua =
           lib.pipe
             {
@@ -105,31 +113,12 @@ lib.makeOverridable (
               lib.concatLines
             ];
 
-        sourceConfig =
-          /*
-            This is the more verbose way to do this
-            the other way looks ugly
-          */
-          lib.pipe
-            [
-              vimlFiles
-              luaFiles
-              (lib.optional (initViml != "") (writeText "init.vim" initViml))
-              (lib.optional (initLua != "") (writeText "init.lua" initLua))
-            ]
-            [
-              lib.concatLists
-              (map (x: "vim.cmd('source ${x}')"))
-              lib.concatLines
-            ];
-
-        luaEnv = neovim.lua.withPackages extraLuaPackages;
-        inherit (neovim.lua.pkgs) luaLib;
-        devRtp = lib.optionalString (dev && devPluginPaths != [ ]) ''
-          vim.opt.runtimepath:prepend('${lib.concatStringsSep "," devPluginPaths}')
-          vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}')
-        '';
-
+        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
+          luaFiles ++ (lib.optional (initLua != "") (writeText "init.lua" initLua))
+        );
+        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
+          vimlFiles ++ (lib.optional (initViml != "") (writeText "init.vim" initViml))
+        );
       in
 
       writeText "init.lua" ''
@@ -139,7 +128,8 @@ lib.makeOverridable (
         vim.opt.runtimepath:append('$out')
         ${devRtp}
         ${providerLua}
-        ${sourceConfig}
+        ${sourceLua}
+        ${sourceVimL}
       '';
 
     builtConfigDir = buildEnv {
