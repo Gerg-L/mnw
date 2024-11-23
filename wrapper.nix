@@ -1,7 +1,7 @@
 {
   lib,
   makeBinaryWrapper,
-  nodePackages,
+  neovim-node-client,
   python3,
   perl,
   bundlerEnv,
@@ -214,7 +214,7 @@ lib.makeOverridable (
         paths =
           lib.optionals withNodeJs [
             nodejs
-            nodePackages.neovim
+            neovim-node-client
           ]
           ++ lib.optionals withRuby [
             (bundlerEnv {
