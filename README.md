@@ -24,9 +24,7 @@ Add the flake input
 mnw.url = "github:Gerg-L/mnw";
 ```
 
-or `import` the base of this repo using
-
-to use [flake-compat](https://github.com/edolstra/flake-compat)
+or `import` the base of this repo using [flake-compat](https://github.com/edolstra/flake-compat)
 
 Then use one of the modules or `mnw.lib.wrap`
 
