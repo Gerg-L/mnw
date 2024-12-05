@@ -122,6 +122,7 @@ lib.makeOverridable (
       in
 
       writeText "init.lua" ''
+        vim.env.PATH =  vim.env.PATH .. ":${lib.makeBinPath ([ providers ] ++ extraBinPath)}"
         package.path = "${luaLib.genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
         package.cpath = "${luaLib.genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath
         vim.opt.packpath:append('$out')
@@ -243,12 +244,6 @@ lib.makeOverridable (
     wrapperArgsStr = lib.escapeShellArgs (
 
       [
-
-        "--suffix"
-        "PATH"
-        ":"
-        (lib.makeBinPath ([ providers ] ++ extraBinPath))
-
         "--set-default"
         "NVIM_APPNAME"
         appName
