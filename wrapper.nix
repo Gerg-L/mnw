@@ -6,7 +6,6 @@
   perl,
   bundlerEnv,
   ruby,
-  python3Packages,
   nodejs,
   linkFarm,
   runCommand,
@@ -200,7 +199,7 @@ lib.makeOverridable (
 
     providers =
       let
-        pythonEnv = python3Packages.python.withPackages (
+        pythonEnv = python3.withPackages (
           ps: [ ps.pynvim ] ++ (extraPython3Packages ps) ++ (allPython3Dependencies ps)
         );
 
