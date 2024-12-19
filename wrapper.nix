@@ -112,12 +112,8 @@ lib.makeOverridable (
               lib.concatLines
             ];
 
-        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
-          luaFiles ++ (lib.optional (initLua != "") (writeText "init.lua" initLua))
-        );
-        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
-          vimlFiles ++ (lib.optional (initViml != "") (writeText "init.vim" initViml))
-        );
+        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (lib.optional (initLua != "") (writeText "init.lua" initLua) ++ luaFiles);
+        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (lib.optional (initViml != "") (writeText "init.vim" initViml) ++ vimlFiles);
       in
 
       writeText "init.lua" ''
