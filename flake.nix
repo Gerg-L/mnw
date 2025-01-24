@@ -4,7 +4,6 @@
     {
       lib = {
         uncheckedWrap = pkgs: pkgs.callPackage ./wrapper.nix { };
-
         wrap =
           pkgs: config:
           let
@@ -28,71 +27,37 @@
               ]
           );
       };
-
-      nixosModules = {
-        default = self.nixosModules.mnw;
-        noInstall = {
-          imports = [
-            (import ./modules/nixos.nix {
-              inherit self;
-              install = false;
-            })
-            ./modules/common.nix
-          ];
-        };
-        mnw = {
-          imports = [
-            (import ./modules/nixos.nix {
-              inherit self;
-              install = true;
-            })
-            ./modules/common.nix
-          ];
-        };
-      };
-
-      homeManagerModules = {
-        default = self.homeManagerModules.mnw;
-        noInstall = {
-          imports = [
-            (import ./modules/homeManager.nix {
-              inherit self;
-              install = false;
-            })
-            ./modules/common.nix
-          ];
-        };
-        mnw = {
-          imports = [
-            (import ./modules/homeManager.nix {
-              inherit self;
-              install = true;
-            })
-            ./modules/common.nix
-          ];
-        };
-      };
-
-      darwinModules = {
-        default = self.darwinModules.mnw;
-        noInstall = {
-          imports = [
-            (import ./modules/nixDarwin.nix {
-              inherit self;
-              install = false;
-            })
-            ./modules/common.nix
-          ];
-        };
-        mnw = {
-          imports = [
-            (import ./modules/nixDarwin.nix {
-              inherit self;
-              install = true;
-            })
-            ./modules/common.nix
-          ];
-        };
-      };
-    };
+    }
+    // builtins.listToAttrs (
+      map
+        (x: {
+          name = "${x}Modules";
+          value = {
+            default = self."${x}Modules";
+            mnw = {
+              imports = [
+                (import ./modules/${x}.nix {
+                  inherit self;
+                  install = true;
+                })
+                ./modules/common.nix
+              ];
+            };
+            noInstall = {
+              imports = [
+                (import ./modules/${x}.nix {
+                  inherit self;
+                  install = false;
+                })
+                ./modules/common.nix
+              ];
+            };
+          };
+        })
+        [
+          "nixos"
+          "homeManager"
+          "darwin"
+        ]
+    );
 }
