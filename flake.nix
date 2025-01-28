@@ -33,7 +33,7 @@
         (x: {
           name = "${x}Modules";
           value = {
-            default = self."${x}Modules";
+            default = self."${x}Modules".mnw;
             mnw = {
               imports = [
                 (import ./modules/${x}.nix {
