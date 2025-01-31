@@ -57,8 +57,8 @@ let
               (lib.removePrefix (toString ../.))
               (lib.removePrefix "/")
               (x: {
-                url = "https://github.com/Gerg-L/mmw/blob/master/${x}";
-                name = "<nvf/${x}>";
+                url = "https://github.com/Gerg-L/mnw/blob/master/${x}";
+                name = "<mnw/${x}>";
               })
             ]
           else if decl == "lib/modules.nix" then
