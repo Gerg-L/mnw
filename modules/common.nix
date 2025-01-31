@@ -13,7 +13,7 @@ let
       pluginType = types.submodule (
         { config, options, ... }:
         {
-          freeformType = types.attrs;
+          freeformType = lib.types.attrsOf lib.types.anything;
 
           options = {
             pname = lib.mkOption {
