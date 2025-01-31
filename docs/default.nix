@@ -82,7 +82,7 @@ stdenvNoCC.mkDerivation {
 
     substituteInPlace ./manual.md \
       --subst-var-by \
-        MNW_VERSION \
+        VERSION \
         ${revision}
 
     substituteInPlace ./options.md \
