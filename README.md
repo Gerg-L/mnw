@@ -50,7 +50,7 @@ and use the `programs.mnw` options
 ```nix
 programs.mnw = {
   enable = true;
-#other config
+  #config options
 ```
 
 and it'll install the wrapped neovim to `environment.systemPackages` or `home.packages`
