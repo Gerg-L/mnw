@@ -1,0 +1,12 @@
+{
+  "name": "docs",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build"
+  },
+  "devDependencies": {
+    "easy-nix-documentation": "^1.0.3",
+    "vitepress": "^1.6.3"
+  }
+}

@@ -1,2 +1,5 @@
 *result
 *.direnv
+node_modules
+cache
+dist
