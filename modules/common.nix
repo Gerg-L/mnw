@@ -154,6 +154,7 @@ in
     finalPackage = lib.mkOption {
       type = types.package;
       readOnly = true;
+      description = "The final package to be consumed by the user";
     };
 
     neovim = lib.mkOption {
@@ -258,8 +259,8 @@ in
       type = types.listOf types.str;
       default = "";
       description = ''
-        The impure absolute paths to nvim plugins 
-        the relative paths of which should be in devExcludedPlugins 
+        The impure absolute paths to nvim plugins
+        the relative paths of which should be in devExcludedPlugins
       '';
       example = ''
         [
