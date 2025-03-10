@@ -161,7 +161,7 @@ in
       type = types.package;
       default = pkgs.neovim-unwrapped;
       description = "The neovim package to use. Must be unwrapped";
-      example = "inputs.neovim-nightly-overlay.packages.\${pkgs.stdenv.system}.default";
+      example = lib.literalExpression "inputs.neovim-nightly-overlay.packages.\${pkgs.stdenv.system}.default";
     };
 
     appName = lib.mkOption {

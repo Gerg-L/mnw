@@ -1,67 +1,60 @@
 {
-  inputs.nixpkgs = {
-    type = "github";
-    owner = "NixOS";
-    repo = "nixpkgs";
-    ref = "nixos-unstable";
+  inputs = {
+    nixpkgs = {
+      type = "github";
+      owner = "NixOS";
+      repo = "nixpkgs";
+      ref = "nixos-unstable";
+    };
+    systems = {
+      type = "github";
+      owner = "nix-systems";
+      repo = "default";
+    };
   };
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      systems,
+    }:
     let
-      system = "x86_64-linux";
       inherit (nixpkgs) lib;
-      pkgs = nixpkgs.legacyPackages.${system};
+      eachSystem = lib.genAttrs (import systems);
     in
     {
-      packages.${system} = {
-        optionsJSON =
-          (pkgs.nixosOptionsDoc {
-            options =
-              (lib.evalModules {
-                modules = [
-                  {
-                    _module = {
-                      args.pkgs = pkgs;
-                    };
-                  }
-                  ../modules/common.nix
-                ];
-              }).options;
-          }).optionsJSON;
-
-        default =
-          with pkgs;
-          buildNpmPackage {
-            name = "mnw-docs";
-            src = ./.;
-            npmDeps = importNpmLock {
-              npmRoot = ./.;
-            };
-            npmConfigHook = importNpmLock.npmConfigHook;
-            env.MNW_OPTIONS_JSON = self.packages.${system}.optionsJSON;
-            # VitePress hangs if you don't pipe the output into a file
-            buildPhase = ''
-              local exit_status=0
-              npm run build > build.log 2>&1 || {
-                  exit_status=$?
-                  :
-              }
-              cat build.log
-              return $exit_status
-            '';
-            installPhase = ''
-              mv .vitepress/dist $out
-            '';
+      packages = eachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        pkgs.nixosOptionsDoc {
+          options =
+            (lib.evalModules {
+              specialArgs = { inherit pkgs; };
+              modules = [ ../modules/common.nix ];
+            }).options.programs.mnw;
+        }
+        // {
+          default = pkgs.callPackage ./package.nix {
+            inherit (self.packages.${pkgs.stdenv.system}) optionsJSON;
           };
-      };
+        }
+      );
 
-      devShells.${system}.default =
-        with pkgs;
-        mkShell {
-          packages = [
-            nodejs
-          ];
-          env.MNW_OPTIONS_JSON = self.packages.${system}.optionsJSON;
-        };
+      devShells = eachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShellNoCC {
+            packages = [
+              pkgs.nodejs
+            ];
+            env.MNW_OPTIONS_JSON = self.packages.${system}.optionsJSON;
+          };
+        }
+      );
     };
 }
