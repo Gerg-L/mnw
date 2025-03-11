@@ -13,7 +13,7 @@
     <link rel="preload" href="/mnw/assets/inter-roman-latin.Di8DUHzh.woff2" as="font" type="font/woff2" crossorigin="">
     <link rel="modulepreload" href="/mnw/assets/chunks/theme.BtlevVAn.js">
     <link rel="modulepreload" href="/mnw/assets/chunks/framework.BIxYopnG.js">
-    <link rel="modulepreload" href="/mnw/assets/options.md.BKGfWNhB.lean.js">
+    <link rel="modulepreload" href="/mnw/assets/options.md.D_X7Ja54.lean.js">
     <script id="check-dark-mode">(()=>{const e=localStorage.getItem("vitepress-theme-appearance")||"auto",a=window.matchMedia("(prefers-color-scheme: dark)").matches;(!e||e==="auto"?a:e==="dark")&&document.documentElement.classList.add("dark")})();</script>
     <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
   </head>
@@ -60,7 +60,7 @@ the relative paths of which should be in devExcludedPlugins</p>
     ''')
   ]
 ''</pre></code></div><!--]--><!--[--><span>Declaration</span><!--[--><div class="nixos-declaration"><a href="https://github.com/Gerg-L/mnw/tree/master/modules/common.nix">&lt;mnw/modules/common.nix&gt;</a></div><!--]--><!--]--></div></div><div><h3 id="programs.mnw.neovim" tabindex="-1">programs.mnw.neovim <a class="header-anchor" href="#programs.mnw.neovim" aria-label="Permalink to &quot;programs.mnw.neovim&quot;">​</a></h3><div><p>The neovim package to use. Must be unwrapped</p>
-</div><div class="nixos-props"><span>Type:</span><div class="nixos-value"><code>package</code></div><!--[--><span>Default:</span><div class="nixos-value"><code><pre><derivation neovim-unwrapped-0.10.1></pre></code></div><!--]--><!--[--><span>Example:</span><div class="nixos-value"><code><pre>"inputs.neovim-nightly-overlay.packages.\${pkgs.stdenv.system}.default"</pre></code></div><!--]--><!--[--><span>Declaration</span><!--[--><div class="nixos-declaration"><a href="https://github.com/Gerg-L/mnw/tree/master/modules/common.nix">&lt;mnw/modules/common.nix&gt;</a></div><!--]--><!--]--></div></div><div><h3 id="programs.mnw.plugins" tabindex="-1">programs.mnw.plugins <a class="header-anchor" href="#programs.mnw.plugins" aria-label="Permalink to &quot;programs.mnw.plugins&quot;">​</a></h3><div><p>A list of plugins to load</p>
+</div><div class="nixos-props"><span>Type:</span><div class="nixos-value"><code>package</code></div><!--[--><span>Default:</span><div class="nixos-value"><code><pre><derivation neovim-unwrapped-0.10.1></pre></code></div><!--]--><!--[--><span>Example:</span><div class="nixos-value"><code><pre>inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.system}.default</pre></code></div><!--]--><!--[--><span>Declaration</span><!--[--><div class="nixos-declaration"><a href="https://github.com/Gerg-L/mnw/tree/master/modules/common.nix">&lt;mnw/modules/common.nix&gt;</a></div><!--]--><!--]--></div></div><div><h3 id="programs.mnw.plugins" tabindex="-1">programs.mnw.plugins <a class="header-anchor" href="#programs.mnw.plugins" aria-label="Permalink to &quot;programs.mnw.plugins&quot;">​</a></h3><div><p>A list of plugins to load</p>
 </div><div class="nixos-props"><span>Type:</span><div class="nixos-value"><code>list of (literal path or (attribute set of anything))</code></div><!--[--><span>Default:</span><div class="nixos-value"><code><pre>[ ]</pre></code></div><!--]--><!--[--><span>Example:</span><div class="nixos-value"><code><pre>''
   # you can pass vimPlugins from nixpkgs
   pkgs.vimPlugins.fzf-lua
@@ -112,7 +112,7 @@ the relative paths of which should be in devExcludedPlugins</p>
     "--layout=reverse --inline-info"
   ];
 ''</pre></code></div><!--]--><!--[--><span>Declaration</span><!--[--><div class="nixos-declaration"><a href="https://github.com/Gerg-L/mnw/tree/master/modules/common.nix">&lt;mnw/modules/common.nix&gt;</a></div><!--]--><!--]--></div></div><!--]--></div></div></div></main><footer class="VPDocFooter" data-v-e6f2a212 data-v-1bcd8184><!--[--><!--]--><!----><!----></footer><!--[--><!--]--></div></div></div><!--[--><!--]--></div></div><!----><!--[--><!--]--></div></div>
-    <script>window.__VP_HASH_MAP__=JSON.parse("{\"index.md\":\"f6OsqhvR\",\"options.md\":\"BKGfWNhB\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Minimal Neovim Wrapper\",\"description\":\"A VitePress Site\",\"base\":\"/mnw/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":true,\"themeConfig\":{\"nav\":[],\"socialLinks\":[{\"icon\":\"github\",\"link\":\"https://github.com/vuejs/vitepress\"}],\"outline\":{\"level\":\"deep\"}},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"index.md\":\"f6OsqhvR\",\"options.md\":\"D_X7Ja54\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Minimal Neovim Wrapper\",\"description\":\"A VitePress Site\",\"base\":\"/mnw/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":true,\"themeConfig\":{\"nav\":[],\"socialLinks\":[{\"icon\":\"github\",\"link\":\"https://github.com/vuejs/vitepress\"}],\"outline\":{\"level\":\"deep\"}},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
     
   </body>
 </html>
