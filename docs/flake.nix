@@ -32,7 +32,7 @@
           options =
             (lib.evalModules {
               specialArgs = { inherit pkgs; };
-              modules = [ ../modules/common.nix ];
+              modules = [ ../modules/common.nix ../modules/standalone.nix ];
             }).options.programs.mnw;
         }
         // {
