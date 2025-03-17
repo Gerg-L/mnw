@@ -15,8 +15,7 @@ lib.makeOverridable (
     neovim,
     extraLuaPackages,
     plugins,
-    viAlias,
-    vimAlias,
+    aliases,
     extraBinPath,
     wrapperArgs,
     vimlFiles,
@@ -263,8 +262,8 @@ lib.makeOverridable (
 
       wrapProgram $out/bin/nvim ${wrapperArgsStr}
 
-      ${lib.optionalString vimAlias "ln -s $out/bin/nvim $out/bin/vim"}
-      ${lib.optionalString viAlias "ln -s $out/bin/nvim $out/bin/vi"}
+      ${lib.concatMapStringsSep "\n" (x: "ln -s $out/bin/nvim $out/bin/'${x}'") aliases}
+
       ${lib.optionalString (!desktopEntry) "rm -rf $out/share/applications"}
 
       runHook postInstall

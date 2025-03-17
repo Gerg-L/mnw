@@ -1,8 +1,6 @@
-{ lib, ... }:
+{ pkgs, ... }:
 {
-  options.warnings = lib.mkOption {
-    internal = true;
-    default = [ ];
-    type = lib.types.listOf lib.types.str;
-  };
+  imports = [
+    (pkgs.path + "/nixos/modules/misc/assertions.nix")
+  ];
 }

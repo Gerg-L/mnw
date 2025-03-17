@@ -19,9 +19,16 @@
                 { programs.mnw = config; }
               ];
             };
+
+            failedAssertions = map (x: x.message) (builtins.filter (x: !x.assertion) evaled.config.assertions);
+            baseSystemAssertWarn =
+              if failedAssertions != [ ] then
+                throw "\nFailed assertions:\n${lib.concatMapStrings (x: "- ${x}") failedAssertions}"
+              else
+                lib.showWarnings evaled.config.warnings;
           in
           self.lib.uncheckedWrap pkgs (
-            (builtins.removeAttrs (pkgs.lib.showWarnings evaled.config.warnings evaled.config.programs.mnw)) [
+            (builtins.removeAttrs (baseSystemAssertWarn evaled.config.programs.mnw)) [
               "enable"
               "finalPackage"
             ]

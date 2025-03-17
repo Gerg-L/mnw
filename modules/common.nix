@@ -155,6 +155,12 @@ let
 in
 {
   imports = [
+    (lib.mkRemovedOptionModule [ "programs" "mnw" "viAlias" ] ''
+      Use 'programs.mnw.aliases = ["vi"];' instead
+    '')
+    (lib.mkRemovedOptionModule [ "programs" "mnw" "vimAlias" ] ''
+      Use 'programs.mnw.aliases = ["vim"];' instead
+    '')
     (lib.mkRenamedOptionModule
       [ "programs" "mnw" "withRuby" ]
       [ "programs" "mnw" "providers" "ruby" "enable" ]
@@ -244,8 +250,17 @@ in
       '';
     };
 
-    viAlias = lib.mkEnableOption "symlinking nvim to vi";
-    vimAlias = lib.mkEnableOption "symlinking nvim to vim";
+    aliases = lib.mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      description = "Aliases to symlink nvim to.";
+      example = lib.literalExpression ''
+        [
+          "vi"
+          "vim"
+        ]
+      '';
+    };
 
     extraLuaPackages = lib.mkOption {
       type = types.functionTo (types.listOf types.package);
