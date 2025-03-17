@@ -1,12 +1,6 @@
 {
   lib,
   makeBinaryWrapper,
-  neovim-node-client,
-  python3,
-  perl,
-  bundlerEnv,
-  ruby,
-  nodejs,
   linkFarm,
   runCommand,
   buildEnv,
@@ -19,11 +13,6 @@
 lib.makeOverridable (
   {
     neovim,
-    withPython3,
-    extraPython3Packages,
-    withNodeJs,
-    withRuby,
-    withPerl,
     extraLuaPackages,
     plugins,
     viAlias,
@@ -36,12 +25,18 @@ lib.makeOverridable (
     initLua,
     appName,
     desktopEntry,
+    providers,
 
     devExcludedPlugins,
     devPluginPaths,
     dev ? false,
+    ...
+  # ^This is needed because of the renamed options
+  # remove when they are removed
   }@mnwWrapperArgs:
   let
+    python3 = providers.python3.package;
+
     splitPlugins = lib.partition (x: x.optional or false) (
       plugins ++ lib.optionals (!dev) devExcludedPlugins
     );
@@ -94,17 +89,17 @@ lib.makeOverridable (
         providerLua =
           lib.pipe
             {
-              node = withNodeJs;
+              node = providers.nodeJs.enable;
               python = false;
-              python3 = withPython3;
-              ruby = withRuby;
-              perl = withPerl;
+              python3 = providers.python3.enable;
+              ruby = providers.ruby.enable;
+              perl = providers.perl.enable;
             }
             [
               (builtins.mapAttrs (
                 prog: withProg:
                 if withProg then
-                  "vim.g.${prog}_host_prog='${providers}/bin/neovim-${prog}-host'"
+                  "vim.g.${prog}_host_prog='${providersEnv}/bin/neovim-${prog}-host'"
                 else
                   "vim.g.loaded_${prog}_provider=0"
               ))
@@ -121,7 +116,7 @@ lib.makeOverridable (
       in
 
       writeText "init.lua" ''
-        vim.env.PATH =  vim.env.PATH .. ":${lib.makeBinPath ([ providers ] ++ extraBinPath)}"
+        vim.env.PATH =  vim.env.PATH .. ":${lib.makeBinPath ([ providersEnv ] ++ extraBinPath)}"
         package.path = "${luaLib.genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
         package.cpath = "${luaLib.genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath
         vim.opt.packpath:append('$out')
@@ -197,46 +192,37 @@ lib.makeOverridable (
       '';
     };
 
-    providers =
+    providersEnv =
       let
         pythonEnv = python3.withPackages (
-          ps: [ ps.pynvim ] ++ (extraPython3Packages ps) ++ (allPython3Dependencies ps)
+          ps: providers.python3.extraPackages ps ++ allPython3Dependencies ps
         );
 
-        perlEnv = perl.withPackages (p: [
-          p.NeovimExt
-          p.Appcpanminus
-        ]);
+        perlEnv = providers.perl.package.withPackages providers.perl.extraPackages;
       in
       buildEnv {
         name = "neovim-providers";
 
         paths =
-          lib.optionals withNodeJs [
-            nodejs
-            neovim-node-client
+          lib.optionals providers.nodeJs.enable [
+            providers.nodeJs.package
+            providers.nodeJs.neovimClientPackage
           ]
-          ++ lib.optionals withRuby [
-            (bundlerEnv {
-              name = "neovim-ruby-env";
-              gemdir = ./ruby_provider;
-              postBuild = ''
-                rm $out/bin/{bundle,bundler}
-              '';
-            })
-            ruby
+          ++ lib.optionals providers.ruby.enable [
+            providers.ruby.env
+            providers.ruby.package
           ];
 
         nativeBuildInputs = [ makeBinaryWrapper ];
 
         postBuild = ''
-          ${lib.optionalString withPython3 ''
+          ${lib.optionalString providers.python3.enable ''
             makeWrapper ${lib.getExe pythonEnv} $out/bin/neovim-python3-host \
                 --unset PYTHONPATH \
                 --unset PYTHONSAFEPATH
           ''}
 
-          ${lib.optionalString withPerl "ln -s ${lib.getExe perlEnv} $out/bin/neovim-perl-host"}
+          ${lib.optionalString providers.perl.enable "ln -s ${lib.getExe perlEnv} $out/bin/neovim-perl-host"}
         '';
       };
 

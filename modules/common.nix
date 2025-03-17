@@ -1,5 +1,11 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
+  cfg = config.programs.mnw;
   inherit (lib) types;
   enabledOption =
     x:
@@ -148,7 +154,30 @@ let
 
 in
 {
+  imports = [
+    (lib.mkRenamedOptionModule
+      [ "programs" "mnw" "withRuby" ]
+      [ "programs" "mnw" "providers" "ruby" "enable" ]
+    )
+    (lib.mkRenamedOptionModule
+      [ "programs" "mnw" "withNodeJs" ]
+      [ "programs" "mnw" "providers" "nodeJs" "enable" ]
+    )
+    (lib.mkRenamedOptionModule
+      [ "programs" "mnw" "withPerl" ]
+      [ "programs" "mnw" "providers" "perl" "enable" ]
+    )
+    (lib.mkRenamedOptionModule
+      [ "programs" "mnw" "withPython3" ]
+      [ "programs" "mnw" "providers" "python3" "enable" ]
+    )
+    (lib.mkRenamedOptionModule
+      [ "programs" "mnw" "extraPython3Packages" ]
+      [ "programs" "mnw" "providers" "python3" "extraPackages" ]
+    )
+  ];
   options.programs.mnw = {
+
     enable = lib.mkEnableOption "mnw (Minimal Neovim Wrapper)";
 
     finalPackage = lib.mkOption {
@@ -175,7 +204,7 @@ in
       type = types.listOf types.pathInStore;
       default = [ ];
       description = "lua config files to load at startup";
-      example = ''
+      example = lib.literalExpression ''
         [
           (pkgs.writeText "init.lua" '''
             print('hello world')
@@ -197,7 +226,7 @@ in
       type = types.listOf types.pathInStore;
       default = [ ];
       description = "VimL config files to load at startup";
-      example = ''
+      example = lib.literalExpression ''
         [
           (pkgs.writeText "init.vim" '''
             echomsg 'hello world'
@@ -218,27 +247,11 @@ in
     viAlias = lib.mkEnableOption "symlinking nvim to vi";
     vimAlias = lib.mkEnableOption "symlinking nvim to vim";
 
-    withRuby = enabledOption "configuring and enabling the ruby provider";
-
-    withNodeJs = lib.mkEnableOption "configuring and enabling the node provider";
-    withPerl = lib.mkEnableOption "configuring and enabling the perl provider";
-
-    withPython3 = enabledOption "configuring and enabling the python3 provider";
-
-    extraPython3Packages = lib.mkOption {
-      type = types.functionTo (types.listOf types.package);
-      default = _: [ ];
-      description = "A function which returns a list of extra needed python3 packages";
-      example = ''
-        py: [ py.pybtex ]
-      '';
-    };
-
     extraLuaPackages = lib.mkOption {
       type = types.functionTo (types.listOf types.package);
       default = _: [ ];
       description = "A function which returns a list of extra needed lua packages";
-      example = ''
+      example = lib.literalExpression ''
         ps: [ ps.jsregexp ]
       '';
     };
@@ -248,10 +261,8 @@ in
         The same as 'plugins' except for when running in dev mode
         add the absolute paths to 'devPluginPaths'
       '';
-      example = ''
-        [
-          ./gerg
-        ]
+      example = lib.literalExpression ''
+        [ ./gerg ]
       '';
     };
 
@@ -262,7 +273,7 @@ in
         The impure absolute paths to nvim plugins
         the relative paths of which should be in devExcludedPlugins
       '';
-      example = ''
+      example = lib.literalExpression ''
         [
           "~/Projects/nvim-flake/gerg"
         ]
@@ -286,7 +297,7 @@ in
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "A list of arguments to be passed to makeWrapper";
-      example = ''
+      example = lib.literalExpression ''
         [
           "--set-default"
           "FZF_DEFAULT_OPTS"
@@ -296,5 +307,103 @@ in
     };
 
     desktopEntry = enabledOption "neovim's desktop entry";
+
+    providers = {
+      nodeJs = {
+        enable = lib.mkEnableOption "and configure the Node.js provider";
+        package = lib.mkOption {
+          type = types.package;
+          default = pkgs.nodejs;
+          description = "The Node.js package to use.";
+          example = "pkgs.nodejs_23";
+        };
+        neovimClientPackage = lib.mkOption {
+          type = types.package;
+          default = pkgs.neovim-node-client;
+          description = "The neovim-node-client package to use.";
+          example = "pkgs.neovim-node-client";
+        };
+      };
+
+      perl = {
+        enable = lib.mkEnableOption "and configure the perl provider";
+        package = lib.mkOption {
+          type = types.package;
+          default = pkgs.perl;
+          description = "The perl package to use.";
+          example = "pkgs.perl";
+        };
+        extraPackages = lib.mkOption {
+          type = types.functionTo (types.listOf types.package);
+          default = p: [
+            p.NeovimExt
+            p.Appcpanminus
+          ];
+          description = ''
+            Extra packages to be included in the perl environment.
+
+            Note: you probably want to include NeovimExt and Appcpanminus if you change this from it's default value.
+          '';
+          example = lib.literalExpression ''
+            p: [
+              p.NeovimExt
+              p.Appcpanminus
+            ]
+          '';
+        };
+      };
+
+      python3 = {
+        enable = enabledOption "and configure the python3 provider";
+        package = lib.mkOption {
+          type = types.package;
+          default = pkgs.python3;
+          description = "The python3 package to use.";
+          example = "pkgs.python39";
+        };
+        extraPackages = lib.mkOption {
+          type = types.functionTo (types.listOf types.package);
+          default = p: [ p.pynvim ];
+          description = ''
+            Extra packages to be included in the python3 environment.
+
+            Note: you probably want to include pynvim if you change this from it's default value.
+          '';
+          example = lib.literalExpression ''
+            py: [
+              py.pynvim
+              py.pybtex
+            ]
+          '';
+        };
+      };
+
+      ruby = {
+        enable = enabledOption "and configure the ruby provider";
+        package = lib.mkOption {
+          type = types.package;
+          default = cfg.providers.ruby.env.ruby;
+          description = "The ruby package to use.";
+          example = "pkgs.ruby";
+        };
+        env = lib.mkOption {
+          type = types.package;
+          default = pkgs.bundlerEnv {
+            name = "neovim-ruby-env";
+            gemdir = ../ruby_provider;
+            postBuild = ''
+              rm $out/bin/{bundle,bundler}
+            '';
+          };
+          description = "";
+          example = lib.literalExpression ''
+            pkgs.bundlerEnv {
+              name = "neovim-ruby-env";
+              gemdir = ../ruby_provider;
+            };
+          '';
+        };
+      };
+    };
   };
 }

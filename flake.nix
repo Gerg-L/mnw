@@ -8,23 +8,23 @@
           pkgs: config:
           let
             inherit (pkgs) lib;
+            evaled = lib.evalModules {
+              specialArgs = {
+                inherit pkgs;
+                modulesPath = toString ./modules;
+              };
+              modules = [
+                ./modules/common.nix
+                ./modules/standalone.nix
+                { programs.mnw = config; }
+              ];
+            };
           in
           self.lib.uncheckedWrap pkgs (
-            (builtins.removeAttrs
-              (lib.evalModules {
-                specialArgs = {
-                  inherit pkgs;
-                };
-                modules = [
-                  ./modules/common.nix
-                  { programs.mnw = config; }
-                ];
-              }).config.programs.mnw
-            )
-              [
-                "enable"
-                "finalPackage"
-              ]
+            (builtins.removeAttrs (pkgs.lib.showWarnings evaled.config.warnings evaled.config.programs.mnw)) [
+              "enable"
+              "finalPackage"
+            ]
           );
       };
     }
