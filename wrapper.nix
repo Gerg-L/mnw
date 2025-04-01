@@ -9,6 +9,8 @@
   stdenvNoCC,
   envsubst,
   callPackage,
+  makeSetupHook,
+  writeShellScriptBin,
 }@callPackageArgs:
 lib.makeOverridable (
   {
@@ -25,10 +27,10 @@ lib.makeOverridable (
     appName,
     desktopEntry,
     providers,
-
     devExcludedPlugins,
     devPluginPaths,
     dev ? false,
+    extraCheckHooks,
     ...
   # ^This is needed because of the renamed options
   # remove when they are removed
@@ -113,7 +115,6 @@ lib.makeOverridable (
           (lib.optional (initViml != "") (writeText "init.vim" initViml)) ++ vimlFiles
         );
       in
-
       writeText "init.lua" ''
         vim.env.PATH =  vim.env.PATH .. ":${lib.makeBinPath ([ providersEnv ] ++ extraBinPath)}"
         package.path = "${luaLib.genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
@@ -153,7 +154,6 @@ lib.makeOverridable (
             mkdir -p $out/pack/mnw/start/__python3_dependencies
             ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/pack/mnw/start/__python3_dependencies/python3
           ''
-
         );
       postBuild = ''
         mkdir $out/nix-support
@@ -226,7 +226,6 @@ lib.makeOverridable (
       };
 
     wrapperArgsStr = lib.escapeShellArgs (
-
       [
         "--set-default"
         "NVIM_APPNAME"
@@ -237,13 +236,24 @@ lib.makeOverridable (
       ]
       ++ wrapperArgs
     );
-
   in
-
   stdenvNoCC.mkDerivation {
     pname = "mnw";
     version = lib.getVersion neovim;
 
+    buildInputs =
+      let
+        mkExtraCheckHook =
+          hook:
+          callPackage (
+            { neovim }:
+            makeSetupHook {
+              name = "mnw-extra-check-hook";
+              propagatedBuildInputs = [ neovim ];
+            } hook
+          ) { };
+      in
+      map (x: mkExtraCheckHook (lib.getExe (writeShellScriptBin "mnw-check-hook" x))) extraCheckHooks;
     nativeBuildInputs = [
       makeBinaryWrapper
       lndir
