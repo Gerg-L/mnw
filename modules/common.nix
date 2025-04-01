@@ -3,94 +3,91 @@
   pkgs,
   config,
   ...
-}:
-let
+}: let
   cfg = config.programs.mnw;
   inherit (lib) types;
-  enabledOption =
-    x:
+  enabledOption = x:
     lib.mkEnableOption x
     // {
       default = true;
       example = false;
     };
-  pluginsOption =
-    let
-      pluginType = types.submodule (
-        { config, options, ... }:
-        {
-          freeformType = lib.types.attrsOf lib.types.anything;
+  pluginsOption = let
+    pluginType = types.submodule (
+      {
+        config,
+        options,
+        ...
+      }: {
+        freeformType = lib.types.attrsOf lib.types.anything;
 
-          options = {
-            pname = lib.mkOption {
-              type = types.str;
-              description = "Versionless name of plugin";
-            };
-            version = lib.mkOption {
-              type = types.str;
-              description = "Version of plugin";
-            };
-
-            name = lib.mkOption {
-              type = types.str;
-              description = "Name of plugin";
-            };
-
-            src = lib.mkOption {
-              type = types.pathInStore;
-              description = "Path in store to plugin";
-            };
-
-            outPath = lib.mkOption {
-              type = types.pathInStore;
-              description = "Path in store to plugin";
-            };
-
-            dependencies = lib.mkOption {
-              type = types.listOf pluginType;
-              description = "Dependencies of plugin";
-              default = [ ];
-            };
-
-            python3Dependencies = lib.mkOption {
-              type = types.functionTo (types.listOf types.package);
-              description = "A function which returns a list of extra needed python3 packages";
-              default = _: [ ];
-            };
-
-            optional = lib.mkOption {
-              type = types.bool;
-              description = "Wether to not load plugin automatically at startup";
-              default = false;
-            };
-
-            plugin = lib.mkOption {
-              apply = _: ''
-                The "plugin" attribute of plugins is not supported by mnw
-                please remove it from plugin: ${config.name}
-              '';
-            };
-            config = lib.mkOption {
-              apply = _: ''
-                The "config" attribute of plugins is not supported by mnw
-                please remove it from plugin: ${config.name}
-              '';
-            };
+        options = {
+          pname = lib.mkOption {
+            type = types.str;
+            description = "Versionless name of plugin";
+          };
+          version = lib.mkOption {
+            type = types.str;
+            description = "Version of plugin";
           };
 
-          config =
+          name = lib.mkOption {
+            type = types.str;
+            description = "Name of plugin";
+          };
 
-            {
-              name = lib.mkIf (options.pname.isDefined && options.version.isDefined) (
-                lib.mkDefault "${config.pname}-${config.version}"
-              );
+          src = lib.mkOption {
+            type = types.pathInStore;
+            description = "Path in store to plugin";
+          };
 
-              outPath = lib.mkIf options.src.isDefined (lib.mkDefault config.src);
-            };
-        }
-      );
+          outPath = lib.mkOption {
+            type = types.pathInStore;
+            description = "Path in store to plugin";
+          };
 
-    in
+          dependencies = lib.mkOption {
+            type = types.listOf pluginType;
+            description = "Dependencies of plugin";
+            default = [];
+          };
+
+          python3Dependencies = lib.mkOption {
+            type = types.functionTo (types.listOf types.package);
+            description = "A function which returns a list of extra needed python3 packages";
+            default = _: [];
+          };
+
+          optional = lib.mkOption {
+            type = types.bool;
+            description = "Wether to not load plugin automatically at startup";
+            default = false;
+          };
+
+          plugin = lib.mkOption {
+            apply = _: ''
+              The "plugin" attribute of plugins is not supported by mnw
+              please remove it from plugin: ${config.name}
+            '';
+          };
+          config = lib.mkOption {
+            apply = _: ''
+              The "config" attribute of plugins is not supported by mnw
+              please remove it from plugin: ${config.name}
+            '';
+          };
+        };
+
+        config = {
+          name = lib.mkIf (options.pname.isDefined && options.version.isDefined) (
+            lib.mkDefault "${config.pname}-${config.version}"
+          );
+
+          outPath = lib.mkIf options.src.isDefined (lib.mkDefault config.src);
+        };
+      }
+    );
+  in
     lib.mkOption {
       type = types.listOf (
         types.oneOf [
@@ -105,7 +102,7 @@ let
           pluginType
         ]
       );
-      default = [ ];
+      default = [];
       description = "A list of plugins to load";
       example = ''
         # you can pass vimPlugins from nixpkgs
@@ -140,50 +137,50 @@ let
       '';
       apply = map (
         x:
-        if builtins.isPath x then
-          {
-
+          if builtins.isPath x
+          then {
             name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
-            python3Dependencies = _: [ ];
+            python3Dependencies = _: [];
             outPath = x;
           }
-        else
-          x
+          else x
       );
     };
-
-in
-{
+in {
   imports = [
-    (lib.mkRemovedOptionModule [ "programs" "mnw" "viAlias" ] ''
+    (lib.mkRemovedOptionModule ["programs" "mnw" "viAlias"] ''
       Use 'programs.mnw.aliases = ["vi"];' instead
     '')
-    (lib.mkRemovedOptionModule [ "programs" "mnw" "vimAlias" ] ''
+    (lib.mkRemovedOptionModule ["programs" "mnw" "vimAlias"] ''
       Use 'programs.mnw.aliases = ["vim"];' instead
     '')
-    (lib.mkRenamedOptionModule
-      [ "programs" "mnw" "withRuby" ]
-      [ "programs" "mnw" "providers" "ruby" "enable" ]
+    (
+      lib.mkRenamedOptionModule
+      ["programs" "mnw" "withRuby"]
+      ["programs" "mnw" "providers" "ruby" "enable"]
     )
-    (lib.mkRenamedOptionModule
-      [ "programs" "mnw" "withNodeJs" ]
-      [ "programs" "mnw" "providers" "nodeJs" "enable" ]
+    (
+      lib.mkRenamedOptionModule
+      ["programs" "mnw" "withNodeJs"]
+      ["programs" "mnw" "providers" "nodeJs" "enable"]
     )
-    (lib.mkRenamedOptionModule
-      [ "programs" "mnw" "withPerl" ]
-      [ "programs" "mnw" "providers" "perl" "enable" ]
+    (
+      lib.mkRenamedOptionModule
+      ["programs" "mnw" "withPerl"]
+      ["programs" "mnw" "providers" "perl" "enable"]
     )
-    (lib.mkRenamedOptionModule
-      [ "programs" "mnw" "withPython3" ]
-      [ "programs" "mnw" "providers" "python3" "enable" ]
+    (
+      lib.mkRenamedOptionModule
+      ["programs" "mnw" "withPython3"]
+      ["programs" "mnw" "providers" "python3" "enable"]
     )
-    (lib.mkRenamedOptionModule
-      [ "programs" "mnw" "extraPython3Packages" ]
-      [ "programs" "mnw" "providers" "python3" "extraPackages" ]
+    (
+      lib.mkRenamedOptionModule
+      ["programs" "mnw" "extraPython3Packages"]
+      ["programs" "mnw" "providers" "python3" "extraPackages"]
     )
   ];
   options.programs.mnw = {
-
     enable = lib.mkEnableOption "mnw (Minimal Neovim Wrapper)";
 
     finalPackage = lib.mkOption {
@@ -208,7 +205,7 @@ in
 
     luaFiles = lib.mkOption {
       type = types.listOf types.pathInStore;
-      default = [ ];
+      default = [];
       description = "lua config files to load at startup";
       example = lib.literalExpression ''
         [
@@ -230,7 +227,7 @@ in
 
     vimlFiles = lib.mkOption {
       type = types.listOf types.pathInStore;
-      default = [ ];
+      default = [];
       description = "VimL config files to load at startup";
       example = lib.literalExpression ''
         [
@@ -252,7 +249,7 @@ in
 
     aliases = lib.mkOption {
       type = types.listOf types.str;
-      default = [ ];
+      default = [];
       description = "Aliases to symlink nvim to.";
       example = lib.literalExpression ''
         [
@@ -264,22 +261,24 @@ in
 
     extraLuaPackages = lib.mkOption {
       type = types.functionTo (types.listOf types.package);
-      default = _: [ ];
+      default = _: [];
       description = "A function which returns a list of extra needed lua packages";
       example = lib.literalExpression ''
         ps: [ ps.jsregexp ]
       '';
     };
 
-    devExcludedPlugins = pluginsOption // {
-      description = ''
-        The same as 'plugins' except for when running in dev mode
-        add the absolute paths to 'devPluginPaths'
-      '';
-      example = lib.literalExpression ''
-        [ ./gerg ]
-      '';
-    };
+    devExcludedPlugins =
+      pluginsOption
+      // {
+        description = ''
+          The same as 'plugins' except for when running in dev mode
+          add the absolute paths to 'devPluginPaths'
+        '';
+        example = lib.literalExpression ''
+          [ ./gerg ]
+        '';
+      };
 
     devPluginPaths = lib.mkOption {
       type = types.listOf types.str;
@@ -298,7 +297,7 @@ in
 
     extraBinPath = lib.mkOption {
       type = types.listOf types.package;
-      default = [ ];
+      default = [];
       description = "Extra packages to be put in neovim's PATH";
       example = ''
         [
@@ -310,7 +309,7 @@ in
 
     wrapperArgs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ ];
+      default = [];
       description = "A list of arguments to be passed to makeWrapper";
       example = lib.literalExpression ''
         [
@@ -378,7 +377,7 @@ in
         };
         extraPackages = lib.mkOption {
           type = types.functionTo (types.listOf types.package);
-          default = p: [ p.pynvim ];
+          default = p: [p.pynvim];
           description = ''
             Extra packages to be included in the python3 environment.
 
@@ -419,6 +418,18 @@ in
           '';
         };
       };
+    };
+
+    extraCheckHooks = lib.mkOption {
+      type = with types; listOf lines;
+      default = [];
+      description = ''
+        A list of strings to be propagated to `buildEnv`'s `buildInputs`.
+
+        The purpose of this option is to allow propagating additional
+        setup hooks to mnw's builder, and the strings provided will
+        be passed *directly* to `makeSetupHook` as the source.
+      '';
     };
   };
 }
