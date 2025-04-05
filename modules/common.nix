@@ -107,36 +107,36 @@ let
       );
       default = [ ];
       description = "A list of plugins to load";
-      example = ''
-        # you can pass vimPlugins from nixpkgs
-        pkgs.vimPlugins.fzf-lua
+      example = lib.literalExpression ''
+        [
+          # you can pass vimPlugins from nixpkgs
+          pkgs.vimPlugins.fzf-lua
 
-        # You can pass a directory
-        # this is recommend for using your own
-        # ftplugins and treesitter queries
-        ./myNeovimConfig
+          # You can pass a directory
+          # this is recommend for using your own
+          # ftplugins and treesitter queries
+          ./myNeovimConfig
 
-        {
-          pname = "customPlugin";
-          version = "1";
+          {
+            pname = "customPlugin";
+            version = "1";
 
-          src = pkgs.fetchFromGitHub {
-           owner = "";
-           repo = "";
-           ref = "";
-           hash = "";
-          };
+            src = pkgs.fetchFromGitHub {
+            owner = "";
+            repo = "";
+            ref = "";
+            hash = "";
+            };
 
-          # Whether to place plugin in /start or /opt
-          optional = false;
+            # Whether to place plugin in /start or /opt
+            optional = false;
 
-          # Plugins can have other plugins as dependencies
-          # this is mainly used in nixpkgs
-          # avoid it if possible
-          dependencies = [];
-
-
-        }
+            # Plugins can have other plugins as dependencies
+            # this is mainly used in nixpkgs
+            # avoid it if possible
+            dependencies = [];
+          }
+        ]
       '';
       apply = map (
         x:
@@ -195,6 +195,7 @@ in
     neovim = lib.mkOption {
       type = types.package;
       default = pkgs.neovim-unwrapped;
+      defaultText = lib.literalExpression "pkgs.neovim-unwrapped";
       description = "The neovim package to use. Must be unwrapped";
       example = lib.literalExpression "inputs.neovim-nightly-overlay.packages.\${pkgs.stdenv.system}.default";
     };
@@ -264,7 +265,8 @@ in
 
     extraLuaPackages = lib.mkOption {
       type = types.functionTo (types.listOf types.package);
-      default = _: [ ];
+      default =  _: [ ];
+      defaultText = lib.literalExpression "ps: [ ]";
       description = "A function which returns a list of extra needed lua packages";
       example = lib.literalExpression ''
         ps: [ ps.jsregexp ]
@@ -300,7 +302,7 @@ in
       type = types.listOf types.package;
       default = [ ];
       description = "Extra packages to be put in neovim's PATH";
-      example = ''
+      example = lib.literalExpression ''
         [
           pkgs.rg
           pkgs.fzf
@@ -317,7 +319,7 @@ in
           "--set-default"
           "FZF_DEFAULT_OPTS"
           "--layout=reverse --inline-info"
-        ];
+        ]
       '';
     };
 
@@ -329,14 +331,16 @@ in
         package = lib.mkOption {
           type = types.package;
           default = pkgs.nodejs;
+          defaultText = lib.literalExpression "pkgs.nodejs";
           description = "The Node.js package to use.";
-          example = "pkgs.nodejs_23";
+          example = lib.literalExpression "pkgs.nodejs_23";
         };
         neovimClientPackage = lib.mkOption {
           type = types.package;
           default = pkgs.neovim-node-client;
+          defaultText = lib.literalExpression "pkgs.neovim-node-client";
           description = "The neovim-node-client package to use.";
-          example = "pkgs.neovim-node-client";
+          example = lib.literalExpression "pkgs.neovim-node-client";
         };
       };
 
@@ -345,8 +349,9 @@ in
         package = lib.mkOption {
           type = types.package;
           default = pkgs.perl;
+          defaultText = lib.literalExpression "pkgs.perl";
           description = "The perl package to use.";
-          example = "pkgs.perl";
+          example = lib.literalExpression "pkgs.perl";
         };
         extraPackages = lib.mkOption {
           type = types.functionTo (types.listOf types.package);
@@ -354,6 +359,12 @@ in
             p.NeovimExt
             p.Appcpanminus
           ];
+          defaultText = lib.literalExpression ''
+            p: [
+              p.NeovimExt
+              p.Appcpanminus
+            ]
+          '';
           description = ''
             Extra packages to be included in the perl environment.
 
@@ -373,12 +384,14 @@ in
         package = lib.mkOption {
           type = types.package;
           default = pkgs.python3;
+          defaultText = lib.literalExpression "pkgs.python3";
           description = "The python3 package to use.";
-          example = "pkgs.python39";
+          example = lib.literalExpression "pkgs.python39";
         };
         extraPackages = lib.mkOption {
           type = types.functionTo (types.listOf types.package);
           default = p: [ p.pynvim ];
+          defaultText = lib.literalExpression "p: [ ppynvim ]";
           description = ''
             Extra packages to be included in the python3 environment.
 
@@ -398,8 +411,9 @@ in
         package = lib.mkOption {
           type = types.package;
           default = cfg.providers.ruby.env.ruby;
+          defaultText = lib.literalExpression "programs.mnw.providers.ruby.env.ruby";
           description = "The ruby package to use.";
-          example = "pkgs.ruby";
+          example = lib.literalExpression "pkgs.ruby";
         };
         env = lib.mkOption {
           type = types.package;
@@ -410,12 +424,21 @@ in
               rm $out/bin/{bundle,bundler}
             '';
           };
+          defaultText = lib.literalExpression ''
+            pkgs.bundlerEnv {
+              name = "neovim-ruby-env";
+              gemdir = ../ruby_provider;
+              postBuild = ${"'" + "'"}
+                rm $out/bin/{bundle,bundler}
+              ${"'" + "'"};
+            }
+          '';
           description = "";
           example = lib.literalExpression ''
             pkgs.bundlerEnv {
               name = "neovim-ruby-env";
               gemdir = ../ruby_provider;
-            };
+            }
           '';
         };
       };

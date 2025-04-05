@@ -9,4 +9,8 @@ import { data } from "./mnw.data.js";
 import { RenderDocs } from "easy-nix-documentation";
 </script>
 
-<RenderDocs :options="data" />
+<RenderDocs :options="data" :exclude="/programs\.mnw\.providers\.*/" />
+
+## Provider Configuration
+
+<RenderDocs :options="data" :include="/programs\.mnw\.providers\.*/" />
