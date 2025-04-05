@@ -12,17 +12,18 @@ export default defineConfig({
       // { text: 'Options', link: '/options' }
     ],
 
-    // sidebar: [
-    //   {
-    //     // text: 'Examples',
-    //     items: [
-    //       { text: 'Options', link: '/options' },
-    //     ]
-    //   }
-    // ],
+    sidebar: [
+      {
+        // text: 'Examples',
+        items: [
+          { text: 'Documentation', link: '/documentation' },
+          { text: 'Options', link: '/options' },
+        ]
+      }
+    ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'github', link: 'https://github.com/Gerg-L/mnw' }
     ],
 
     outline: {

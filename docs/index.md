@@ -10,6 +10,9 @@ hero:
     - theme: brand
       text: Options
       link: /options
+    - theme: brand
+      text: Documentation
+      link: /documentation
     - theme: alt
       text: GitHub
       link: https://github.com/Gerg-L/mnw
