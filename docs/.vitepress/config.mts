@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Minimal Neovim Wrapper",
   description: "A VitePress Site",
-  base: "/mnw/",
+  // base: "/mnw/", // Manually pass with --base
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [

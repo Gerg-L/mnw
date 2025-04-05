@@ -3,10 +3,10 @@
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
-    "build": "vitepress build"
+    "build": "vitepress build --base=/mnw/"
   },
   "devDependencies": {
-    "easy-nix-documentation": "^1.0.3",
+    "easy-nix-documentation": "^1.1.0",
     "vitepress": "^1.6.3"
   }
 }
