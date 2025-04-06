@@ -2,4 +2,4 @@
 title: Documentation
 ---
 
-<!--@include: ../README.md -->
+<!--@include: ./README.md -->
