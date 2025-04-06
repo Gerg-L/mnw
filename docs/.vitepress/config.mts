@@ -5,6 +5,9 @@ export default defineConfig({
   title: "Minimal Neovim Wrapper",
   description: "A VitePress Site",
   // base: "/mnw/", // Manually pass with --base
+  srcExclude: [
+    "README.md",
+  ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
