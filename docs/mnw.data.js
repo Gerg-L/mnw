@@ -7,7 +7,7 @@ export default {
             exit(1)
         }
         return await loadOptions(optionsJSON, {
-            include: [/programs\.mnw\.*/],
+            include: [/^(?!.*_module)/],
             mapDeclarations: declaration => {
                 const relDecl = stripNixStore(declaration);
                 return `<a href="https://github.com/Gerg-L/mnw/tree/master/${relDecl}">&lt;mnw/${relDecl}&gt;</a>`

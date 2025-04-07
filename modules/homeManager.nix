@@ -1,4 +1,4 @@
-{ self, install }:
+self:
 {
   config,
   lib,
@@ -9,16 +9,9 @@ let
   cfg = config.programs.mnw;
 in
 {
-  config = lib.mkMerge [
-    (lib.mkIf cfg.enable {
-      programs.mnw.finalPackage = self.lib.uncheckedWrap pkgs (
-        builtins.removeAttrs cfg [
-          "finalPackage"
-          "enable"
-        ]
-      );
-    })
-    (lib.optionalAttrs install { home.packages = [ config.programs.mnw.finalPackage ]; })
-  ];
+  config = {
+    programs.mnw.finalPackage = self.lib.uncheckedWrap pkgs cfg;
+    home.packages = lib.mkIf cfg.enable [ config.programs.mnw.finalPackage ];
+  };
   _file = ./homeManager.nix;
 }

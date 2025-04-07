@@ -29,14 +29,13 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         pkgs.nixosOptionsDoc {
-          options =
+          options.mnw =
             (lib.evalModules {
               specialArgs = { inherit pkgs; };
               modules = [
-                ../modules/common.nix
-                ../modules/standalone.nix
+                ../modules/options.nix
               ];
-            }).options.programs.mnw;
+            }).options;
         }
         // {
           default = pkgs.callPackage ./package.nix {
@@ -52,6 +51,7 @@
         in
         {
           default = pkgs.mkShellNoCC {
+            # use npm run dev
             packages = [
               pkgs.nodejs
             ];

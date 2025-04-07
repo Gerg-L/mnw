@@ -8,12 +8,10 @@
   outputs =
     { nixpkgs, ... }@inputs:
     {
-      nixosConfigurations = {
-        your_hostname = nixpkgs.lib.nixosSystem {
-          modules = [ ./configuration.nix ];
-          specialArgs = {
-            inherit inputs;
-          };
+      nixosConfigurations.hostname = nixpkgs.lib.nixosSystem {
+        modules = [ ./configuration.nix ];
+        specialArgs = {
+          inherit inputs;
         };
       };
     };

@@ -5,7 +5,7 @@
       lib = {
         uncheckedWrap = pkgs: pkgs.callPackage ./wrapper.nix { };
         wrap =
-          pkgs: config:
+          pkgs: module:
           let
             inherit (pkgs) lib;
             evaled = lib.evalModules {
@@ -14,9 +14,8 @@
                 modulesPath = toString ./modules;
               };
               modules = [
-                ./modules/common.nix
-                ./modules/standalone.nix
-                { programs.mnw = config; }
+                ./modules/options.nix
+                module
               ];
             };
 
@@ -27,12 +26,7 @@
               else
                 lib.showWarnings evaled.config.warnings;
           in
-          self.lib.uncheckedWrap pkgs (
-            (builtins.removeAttrs (baseSystemAssertWarn evaled.config.programs.mnw)) [
-              "enable"
-              "finalPackage"
-            ]
-          );
+          self.lib.uncheckedWrap pkgs (baseSystemAssertWarn evaled.config);
       };
     }
     // builtins.listToAttrs (
@@ -43,19 +37,7 @@
             default = self."${x}Modules".mnw;
             mnw = {
               imports = [
-                (import ./modules/${x}.nix {
-                  inherit self;
-                  install = true;
-                })
-                ./modules/common.nix
-              ];
-            };
-            noInstall = {
-              imports = [
-                (import ./modules/${x}.nix {
-                  inherit self;
-                  install = false;
-                })
+                (import ./modules/${x}.nix self)
                 ./modules/common.nix
               ];
             };

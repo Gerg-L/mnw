@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
 {
   imports = [ inputs.mnw.nixosModules.default ];
 
@@ -16,7 +21,8 @@
   # Other configuration here
 
   # These are dummy options to allow eval
-  fileSystems."/".label = "x";
-  boot.loader.grub.enable = false;
   nixpkgs.hostPlatform = "x86_64-linux";
+  boot.loader.grub.enable = false;
+  fileSystems."/".device = "nodev";
+  system.stateVersion = lib.trivial.release;
 }
