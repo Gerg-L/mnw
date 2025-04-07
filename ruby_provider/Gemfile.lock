@@ -1,7 +1,8 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    msgpack (1.7.2)
+    logger (1.7.0)
+    msgpack (1.8.0)
     multi_json (1.15.0)
     neovim (0.10.0)
       msgpack (~> 1.1)
@@ -9,9 +10,11 @@ GEM
 
 PLATFORMS
   ruby
+  x86_64-linux
 
 DEPENDENCIES
+  logger
   neovim
 
 BUNDLED WITH
-   2.3.27
+   2.6.2

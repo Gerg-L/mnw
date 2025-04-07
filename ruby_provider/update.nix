@@ -4,13 +4,18 @@
 pkgs.mkShellNoCC {
 
   packages = [
-    (pkgs.ruby.withPackages (p: [ p.msgpack ]))
+    pkgs.bundler
     pkgs.bundix
+    pkgs.nixfmt-rfc-style
   ];
 
   shellHook = ''
-    bundle update
+    rm -f gemset.nix Gemfile.lock
+
+    bundler lock --update
     bundix
+    nixfmt gemset.nix
+
     exit 0
   '';
 }
