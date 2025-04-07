@@ -75,5 +75,7 @@ See the generated docs:
 
 [NotAShelf](https://github.com/notashelf/nvf)
 
+[viperML](https://github.com/viperML/dotfiles/blob/master/packages/neovim/module.nix)
+
 Make a PR to add your config :D
 
