@@ -228,12 +228,13 @@ lib.makeOverridable (
     wrapperArgsStr = lib.escapeShellArgs (
 
       [
-        "--set-default"
+        "--set"
         "NVIM_APPNAME"
         appName
 
-        "--add-flags"
-        "-u ${builtConfigDir}/init.lua"
+        "--set"
+        "VIMINIT"
+        "source ${builtConfigDir}/init.lua"
       ]
       ++ wrapperArgs
     );
