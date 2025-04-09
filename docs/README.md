@@ -88,6 +88,33 @@ Alternatively set `programs.mnw.enable = false;` and add
 
 See the generated docs: <https://gerg-l.github.io/mnw/options.html>
 
+### Exrc support
+
+Mnw uses the flag `-u` to load your plugins, which means that some stages of initialization are skipped, like exrc.
+
+To restore exrc, you can use the following plugin to be loaded in `after/`:
+
+```nix
+{ pkgs, ... }:
+{
+  programs.mnw.plugins = [
+
+    (pkgs.writeTextDir "after/plugin/init.lua" ''
+      if vim.opt.exrc:get() then
+        local path = vim.fn.getcwd() .. "/.nvim.lua"
+        if vim.uv.fs_stat(path) then
+          local read = vim.secure.read(path)
+          if read ~= nil then
+            load(read)()
+          end
+        end
+      end
+    '')
+
+  ];
+}
+```
+
 ### Examples
 
 [Simple NixOS example](https://github.com/Gerg-L/mnw/tree/master/examples/nixos)
