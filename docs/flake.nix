@@ -29,13 +29,17 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         pkgs.nixosOptionsDoc {
-          options.mnw =
-            (lib.evalModules {
-              specialArgs = { inherit pkgs; };
-              modules = [
-                ../modules/options.nix
-              ];
-            }).options;
+          inherit
+            (
+              (lib.evalModules {
+                specialArgs = { inherit pkgs; };
+                modules = [
+                  ../modules/options.nix
+                ];
+              })
+            )
+            options
+            ;
         }
         // {
           default = pkgs.callPackage ./package.nix {
