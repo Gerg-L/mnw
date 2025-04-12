@@ -40,6 +40,7 @@
               # here it'll only work from this directory
               "./nvim"
             ];
+            plugins = [ pkgs.vimPlugins.oil-nvim ];
           };
         };
 
