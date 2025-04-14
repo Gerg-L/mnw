@@ -3,26 +3,21 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: "Minimal Neovim Wrapper",
-  description: "A VitePress Site",
+  description: "",
   // base: "/mnw/", // Manually pass with --base
-  srcExclude: [
-    "README.md",
-  ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    nav: [
-      // { text: 'Home', link: '/' },
-      // { text: 'Options', link: '/options' }
-    ],
-
+    search: {
+      provider: 'local'
+    },
     sidebar: [
       {
-        // text: 'Examples',
         items: [
-          { text: 'Documentation', link: '/documentation' },
+          { text: 'Home', link: '/index' },
+          { text: 'Usage', link: '/usage' },
           { text: 'Options', link: '/options' },
-        ]
-      }
+        ],
+      },
     ],
 
     socialLinks: [
