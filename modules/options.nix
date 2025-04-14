@@ -82,10 +82,12 @@ let
           ./myNeovimConfig
 
           {
-            # `pname` and `version`
-            # or `name` is required
+            # "pname" and "version"
+            # or "name" is required
             pname = "customPlugin";
             version = "1";
+
+            name = "customPlugin-1";
 
             src = pkgs.fetchFromGitHub {
               owner = "";
