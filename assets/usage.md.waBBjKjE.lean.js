@@ -1,0 +1,1 @@
+import{_ as i,c as a,o as e,ag as t}from"./chunks/framework.QEQtwygg.js";const c=JSON.parse('{"title":"","description":"","frontmatter":{},"headers":[],"relativePath":"usage.md","filePath":"usage.md"}'),n={name:"usage.md"};function l(p,s,h,o,r,d){return e(),a("div",null,s[0]||(s[0]=[t("",34)]))}const g=i(n,[["render",l]]);export{c as __pageData,g as default};
