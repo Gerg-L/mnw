@@ -36,9 +36,7 @@ lib.makeOverridable (
   let
     python3 = providers.python3.package;
 
-    splitPlugins = lib.partition (x: x.optional or false) (
-      plugins ++ lib.optionals (!dev) devExcludedPlugins
-    );
+    splitPlugins = lib.partition (x: x.optional) (plugins ++ lib.optionals (!dev) devExcludedPlugins);
 
     optPlugins = splitPlugins.right;
 
@@ -57,7 +55,7 @@ lib.makeOverridable (
             [
               y
             ]
-            (findDeps (y.dependencies or [ ]))
+            (findDeps y.dependencies)
           ]
         ) [ ];
       in
@@ -67,12 +65,12 @@ lib.makeOverridable (
         only nixpkgs plugins have dependencies though
         so it should be okay
       */
-      lib.subtractLists optPlugins ((findDeps splitPlugins.wrong) ++ (findDeps optPlugins));
+      lib.unique (lib.subtractLists optPlugins ((findDeps splitPlugins.wrong) ++ (findDeps optPlugins)));
 
     allPython3Dependencies =
       ps:
       lib.pipe startPlugins [
-        (lib.concatMap (plugin: (plugin.python3Dependencies or (_: [ ])) ps))
+        (lib.concatMap (plugin: plugin.python3Dependencies ps))
         lib.unique
       ];
     generatedInitLua =
@@ -137,10 +135,8 @@ lib.makeOverridable (
             name: plugins:
             linkFarm "${name}-configdir" (
               map (drv: {
-                name = "pack/mnw/${name}/${
-                  if (drv ? pname && (builtins.tryEval drv.pname).success) then drv.pname else drv.name
-                }";
-                path = drv;
+                name = "pack/mnw/${name}/${lib.getName drv}";
+                path = drv.outPath;
               }) plugins
             );
         in
@@ -252,14 +248,16 @@ lib.makeOverridable (
 
     dontUnpack = true;
     strictDeps = true;
+
+    # Massively reduces build times
     dontRewriteSymlinks = true;
 
     installPhase = ''
       runHook preInstall
 
       # symlinkJoin
-      mkdir -p $out
-      lndir -silent ${neovim} $out
+      mkdir -p "$out"
+      lndir -silent '${neovim}' "$out"
 
       wrapProgram $out/bin/nvim ${wrapperArgsStr}
 

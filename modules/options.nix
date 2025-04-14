@@ -21,28 +21,16 @@ let
           freeformType = lib.types.attrsOf lib.types.anything;
 
           options = {
-            pname = lib.mkOption {
-              type = types.str;
-              description = "Versionless name of plugin";
-            };
-            version = lib.mkOption {
-              type = types.str;
-              description = "Version of plugin";
-            };
-
-            name = lib.mkOption {
-              type = types.str;
-              description = "Name of plugin";
-            };
-
             src = lib.mkOption {
               type = types.pathInStore;
               description = "Path in store to plugin";
+              default = config.outPath;
             };
 
             outPath = lib.mkOption {
               type = types.pathInStore;
               description = "Path in store to plugin";
+              default = config.src;
             };
 
             dependencies = lib.mkOption {
@@ -59,33 +47,13 @@ let
 
             optional = lib.mkOption {
               type = types.bool;
-              description = "Wether to not load plugin automatically at startup";
+              description = "Whether to not load plugin automatically at startup";
               default = false;
             };
-
-            plugin = lib.mkOption {
-              apply = _: ''
-                The "plugin" attribute of plugins is not supported by mnw
-                please remove it from plugin: ${config.name}
-              '';
-            };
-            config = lib.mkOption {
-              apply = _: ''
-                The "config" attribute of plugins is not supported by mnw
-                please remove it from plugin: ${config.name}
-              '';
-            };
-          };
-
-          config = {
-            name = lib.mkIf (options.pname.isDefined && options.version.isDefined) (
-              lib.mkDefault "${config.pname}-${config.version}"
-            );
-
-            outPath = lib.mkIf options.src.isDefined (lib.mkDefault config.src);
           };
         }
       );
+
     in
     lib.mkOption {
       type = types.listOf (
@@ -102,6 +70,7 @@ let
       );
       default = [ ];
       description = "A list of plugins to load";
+      visible = "shallow";
       example = lib.literalExpression ''
         [
           # you can pass vimPlugins from nixpkgs
@@ -113,14 +82,16 @@ let
           ./myNeovimConfig
 
           {
+            # `pname` and `version`
+            # or `name` is required
             pname = "customPlugin";
             version = "1";
 
             src = pkgs.fetchFromGitHub {
-            owner = "";
-            repo = "";
-            ref = "";
-            hash = "";
+              owner = "";
+              repo = "";
+              ref = "";
+              hash = "";
             };
 
             # Whether to place plugin in /start or /opt
@@ -137,9 +108,14 @@ let
         x:
         if builtins.isPath x then
           {
+            # These two are required
             name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
-            python3Dependencies = _: [ ];
             outPath = x;
+            # Set everything else as if it's default
+            src = x;
+            python3Dependencies = _: [ ];
+            dependencies = [ ];
+            optional = false;
           }
         else
           x
