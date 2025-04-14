@@ -13,8 +13,16 @@
       require("myconfig")
     '';
     plugins = [
-      ./nvim
       pkgs.vimPlugins.oil-nvim
+    ];
+
+    devExcludedPlugins = [
+      ./nvim
+    ];
+    devPluginPaths = [
+      # This normally should be a absolute path
+      # here it'll only work from this directory
+      "./nvim"
     ];
   };
 

@@ -21,7 +21,7 @@ Based off the nixpkgs wrapper but:
 - `evalModules` "type" checking
 - more convenience options
 - doesn't take two functions to wrap
-
+- `devMode` hot reloading quicker config iteration
 There are no flake inputs.
 
 ## Usage
@@ -91,16 +91,27 @@ and mnw will install the wrapped neovim to `environment.systemPackages` or
 Alternatively set `programs.mnw.enable = false;` and add
 `config.programs.mnw.finalPackage` where you want manually
 
+## Dev mode
 
-### Examples
+To setup hot reloading for quicker neovim config iteration:
+
+Put your config plugin in `devExcludedPlugins`,
+
+and set `devPluginPaths` to the absolute path of the plugin.
+
+Then you can use the `.devMode` attribute of the created neovim package!
+
+See the examples below:
+
+## Examples
 
 [Simple NixOS example](https://github.com/Gerg-L/mnw/tree/master/examples/nixos)
 
-[Standalone, easy development](https://github.com/Gerg-L/mnw/tree/master/examples/easy-dev)
+[Standalone, easy development](https://github.com/Gerg-L/mnw/tree/master/examples/standalone)
 
 [My Neovim flake](https://github.com/Gerg-L/nvim-flake)
 
-[nvf](https://github.com/notashelf/nvf)
+[nvf](https://github.com/NotAShelf/nvf)
 
 [viperML](https://github.com/viperML/dotfiles/blob/master/packages/neovim/module.nix)
 
