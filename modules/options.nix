@@ -243,7 +243,7 @@ in
 
     devPluginPaths = lib.mkOption {
       type = types.listOf types.str;
-      default = "";
+      default = [ ];
       description = ''
         The impure absolute paths to nvim plugins
         the relative paths of which should be in devExcludedPlugins
