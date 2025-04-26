@@ -280,16 +280,10 @@ lib.makeOverridable (
     # From nixpkgs
     meta = {
       inherit (neovim.meta)
-        description
-        longDescription
-        homepage
         mainProgram
         license
-        maintainers
         platforms
         ;
-      # To prevent builds on hydra
-      hydraPlatforms = [ ];
       # prefer wrapper over the package
       priority = (neovim.meta.priority or 0) - 2;
     };
