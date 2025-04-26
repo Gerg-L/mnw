@@ -5,12 +5,21 @@
       lib = {
         uncheckedWrap = pkgs: pkgs.callPackage ./wrapper.nix { };
         wrap =
-          pkgs: module:
+          args:
+          let
+            argsIsPkgs = args._type or null == "pkgs";
+            pkgs =
+              if argsIsPkgs then
+                args
+              else
+                assert args.pkgs._type == "pkgs";
+                args.pkgs;
+          in
+          module:
           let
             inherit (pkgs) lib;
             evaled = lib.evalModules {
-              specialArgs = {
-                inherit pkgs;
+              specialArgs = (if argsIsPkgs then { pkgs = args; } else args) // {
                 modulesPath = toString ./modules;
               };
               modules = [
