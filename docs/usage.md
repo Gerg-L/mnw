@@ -83,6 +83,8 @@ See the examples below:
 
 [Standalone, easy development](https://github.com/Gerg-L/mnw/tree/master/examples/standalone)
 
+[Lazy loading with lz.n](https://github.com/Gerg-L/mnw/tree/master/examples/lazy)
+
 [My Neovim flake](https://github.com/Gerg-L/nvim-flake)
 
 [nvf](https://github.com/NotAShelf/nvf)
