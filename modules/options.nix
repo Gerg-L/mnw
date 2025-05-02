@@ -1,3 +1,4 @@
+docs:
 {
   lib,
   pkgs,
@@ -6,117 +7,6 @@
 }:
 let
   inherit (lib) types;
-  pluginsOption =
-    let
-      pluginType = types.submodule (
-        { config, options, ... }:
-        {
-          freeformType = lib.types.attrsOf lib.types.anything;
-
-          options = {
-            src = lib.mkOption {
-              type = types.pathInStore;
-              description = "Path in store to plugin";
-              default = config.outPath;
-            };
-
-            outPath = lib.mkOption {
-              type = types.pathInStore;
-              description = "Path in store to plugin";
-              default = config.src;
-            };
-
-            dependencies = lib.mkOption {
-              type = types.listOf pluginType;
-              description = "Dependencies of plugin";
-              default = [ ];
-            };
-
-            python3Dependencies = lib.mkOption {
-              type = types.functionTo (types.listOf types.package);
-              description = "A function which returns a list of extra needed python3 packages";
-              default = _: [ ];
-            };
-
-            optional = lib.mkOption {
-              type = types.bool;
-              description = "Whether to not load plugin automatically at startup";
-              default = false;
-            };
-          };
-        }
-      );
-
-    in
-    lib.mkOption {
-      type = types.listOf (
-        types.oneOf [
-          (lib.mkOptionType {
-            name = "path";
-            description = "literal path";
-            descriptionClass = "noun";
-            check = builtins.isPath;
-            merge = lib.mergeEqualOption;
-          })
-          pluginType
-        ]
-      );
-      default = [ ];
-      description = "A list of plugins to load";
-      visible = "shallow";
-      example = lib.literalExpression ''
-        [
-          # you can pass vimPlugins from nixpkgs
-          pkgs.vimPlugins.fzf-lua
-
-          # You can pass a directory
-          # this is recommend for using your own
-          # ftplugins and treesitter queries
-          ./myNeovimConfig
-
-          {
-            # "pname" and "version"
-            # or "name" is required
-            pname = "customPlugin";
-            version = "1";
-
-            name = "customPlugin-1";
-
-            src = pkgs.fetchFromGitHub {
-              owner = "";
-              repo = "";
-              ref = "";
-              hash = "";
-            };
-
-            # Whether to place plugin in /start or /opt
-            optional = false;
-
-            # Plugins can have other plugins as dependencies
-            # this is mainly used in nixpkgs
-            # avoid it if possible
-            dependencies = [];
-          }
-        ]
-      '';
-      apply = map (
-        x:
-        if builtins.isPath x then
-          {
-            # These two are required
-            name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
-            outPath = x;
-            # Set everything else as if it's default
-            src = x;
-            python3Dependencies = _: [ ];
-            dependencies = [ ];
-            optional = false;
-          }
-        else
-          x
-      );
-    };
-
 in
 {
   imports = [
@@ -125,6 +15,12 @@ in
     '')
     (lib.mkRemovedOptionModule [ "vimAlias" ] ''
       Use 'aliases = ["vim"];' instead
+    '')
+    (lib.mkRemovedOptionModule [ "devExcludedPlugins" ] ''
+      Use 'plugins.dev.<name>.pure' instead
+    '')
+    (lib.mkRemovedOptionModule [ "devPluginPaths" ] ''
+      Use 'plugins.dev.<name>.impure' instead
     '')
     (lib.mkRenamedOptionModule [ "withRuby" ] [ "providers" "ruby" "enable" ])
     (lib.mkRenamedOptionModule [ "withNodeJs" ] [ "providers" "nodeJs" "enable" ])
@@ -218,36 +114,202 @@ in
       type = types.functionTo (types.listOf types.package);
       default = _: [ ];
       defaultText = lib.literalExpression "ps: [ ]";
-      description = "A function which returns a list of extra needed lua packages";
+      description = "A function which returns a list of extra needed lua packages.";
       example = lib.literalExpression ''
         ps: [ ps.jsregexp ]
       '';
     };
 
-    devExcludedPlugins = pluginsOption // {
-      description = ''
-        The same as 'plugins' except for when running in dev mode
-        add the absolute paths to 'devPluginPaths'
-      '';
-      example = lib.literalExpression ''
-        [ ./gerg ]
-      '';
-    };
+    plugins =
+      let
+        pluginType = types.submodule (
+          { config, options, ... }:
+          {
+            freeformType = lib.types.attrsOf lib.types.anything;
 
-    devPluginPaths = lib.mkOption {
-      type = types.listOf types.str;
-      default = [ ];
-      description = ''
-        The impure absolute paths to nvim plugins
-        the relative paths of which should be in devExcludedPlugins
-      '';
-      example = lib.literalExpression ''
-        [
-          "~/Projects/nvim-flake/gerg"
-        ]
-      '';
-    };
-    plugins = pluginsOption;
+            options = {
+              src = lib.mkOption {
+                type = types.pathInStore;
+                description = "Path in store to plugin";
+                default = config.outPath;
+              };
+
+              outPath = lib.mkOption {
+                type = types.pathInStore;
+                description = "Path in store to plugin";
+                default = config.src;
+              };
+
+              dependencies = lib.mkOption {
+                type = types.listOf pluginType;
+                description = "Dependencies of plugin";
+                default = [ ];
+              };
+
+              python3Dependencies = lib.mkOption {
+                type = types.functionTo (types.listOf types.package);
+                description = "A function which returns a list of extra needed python3 packages";
+                default = _: [ ];
+              };
+            };
+          }
+        );
+
+        type = types.submodule {
+          options = {
+            start = lib.mkOption {
+              type = types.listOf pluginType;
+              default = [ ];
+              description = ''
+                Plugins to place in /start
+                (automatically loaded)
+              '';
+              example = lib.literalExpression "[ pkgs.vimPlugins.lz-n ]";
+            };
+            opt = lib.mkOption {
+              type = types.listOf pluginType;
+              default = [ ];
+              description = ''
+                Plugins to place in /opt
+                (not automatically loaded)
+              '';
+              example = lib.literalExpression "[ pkgs.vimPlugins.oil-nvim ]";
+            };
+            dev = lib.mkOption {
+              type = types.attrsOf (
+                types.submodule {
+                  options = {
+                    impure = lib.mkOption {
+                      type = types.path;
+                      description = ''
+                        The impure absolute paths to the nvim plugin.
+                      '';
+                      example = lib.literalExpression "/home/user/nix-config/nvim";
+                    };
+                    pure = lib.mkOption {
+                      type = pluginType;
+                      description = ''
+                        The pure path to the nvim plugin.
+                      '';
+                      example = lib.literalExpression "./nvim";
+                    };
+                  };
+                }
+              );
+              default = { };
+              description = ''
+                Plugins for use with devMode.
+                You most likely want to put your config here.
+                (automatically loaded)
+              '';
+              example = lib.literalExpression ''
+                {
+                  myconfig = {
+                    impure = "/home/user/nix-config/nvim";
+                    pure = ./nvim;
+                  };
+                }
+              '';
+            };
+          };
+        };
+      in
+
+      lib.mkOption {
+        # Hack for documentation until
+        # full deprecation of plugins as a list
+        type =
+          if docs then
+            type
+          else
+            types.oneOf [
+              type
+              (types.listOf pluginType)
+            ];
+        apply =
+          x:
+          if builtins.isList x then
+            (
+              let
+                part = builtins.partition (x: x.optional or false) x;
+              in
+              lib.warn
+                ''
+                  mnw: plugins is being used as a list, please convert to the new format:
+                  plugins = {
+                    start = [];
+                    opt = [];
+                    dev = {};
+                  }
+                ''
+                {
+                  start = part.wrong;
+                  opt = part.right;
+                  dev = { };
+                }
+            )
+          else
+            x;
+        default = { };
+        description = ''
+          neovim plugins.
+        '';
+        example = lib.literalExpression ''
+          {
+            plugins = {
+              # Plugins which can be reloaded without rebuilding
+              # see dev mode in the docs
+              dev.myconfig = {
+                # This is the recommended way of passing your config
+                pure = ./nvim;
+                impure = "/home/user/nix-config/nvim";
+              };
+
+              # List of plugins to load automatically
+              start = [
+                # you can pass vimPlugins from nixpkgs
+                pkgs.vimPlugins.lz-n
+
+                # To pass a directory
+                # ('plugins.dev.<name>' is preferred for directories)
+                {
+                  name = "plugin";
+                  src = ./plugin;
+                }
+
+
+                # Custom plugin example
+                {
+                  # "pname" and "version"
+                  # or "name" is required
+                  pname = "customPlugin";
+                  version = "1";
+
+                  name = "customPlugin-1";
+
+                  src = pkgs.fetchFromGitHub {
+                    owner = "";
+                    repo = "";
+                    ref = "";
+                    hash = "";
+                  };
+
+                  # Plugins can have other plugins as dependencies
+                  # this is mainly used in nixpkgs
+                  # avoid it if possible
+                  dependencies = [];
+                }
+              ];
+
+              # List of plugins to not load automatically
+              # (load with packadd or a lazy loading plugin )
+              opt = [
+                pkgs.vimPlugins.oil-nvim
+              ];
+            };
+          }
+        '';
+      };
 
     extraBinPath = lib.mkOption {
       type = types.listOf types.package;

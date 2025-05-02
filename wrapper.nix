@@ -14,7 +14,6 @@ lib.makeOverridable (
   {
     neovim,
     extraLuaPackages,
-    plugins,
     aliases,
     extraBinPath,
     wrapperArgs,
@@ -25,10 +24,8 @@ lib.makeOverridable (
     appName,
     desktopEntry,
     providers,
-
-    devExcludedPlugins,
-    devPluginPaths,
     dev ? false,
+    plugins,
     ...
   # ^This is needed because of the renamed options
   # remove when they are removed
@@ -36,9 +33,11 @@ lib.makeOverridable (
   let
     python3 = providers.python3.package;
 
-    splitPlugins = lib.partition (x: x.optional) (plugins ++ lib.optionals (!dev) devExcludedPlugins);
+    devPlugins = builtins.attrValues (
+      builtins.mapAttrs (_: v: builtins.getAttr (if dev then "impure" else "pure") v) plugins.dev
+    );
 
-    optPlugins = splitPlugins.right;
+    optPlugins = plugins.opt;
 
     startPlugins =
       let
@@ -65,7 +64,9 @@ lib.makeOverridable (
         only nixpkgs plugins have dependencies though
         so it should be okay
       */
-      lib.unique (lib.subtractLists optPlugins ((findDeps splitPlugins.wrong) ++ (findDeps optPlugins)));
+
+      lib.optionals (!dev) devPlugins
+      ++ lib.unique (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)));
 
     allPython3Dependencies =
       ps:
@@ -201,9 +202,9 @@ lib.makeOverridable (
               "vim.opt.packpath:append('${builtConfigDir}')"
               "vim.opt.runtimepath:append('${builtConfigDir}')"
             ]
-            ++ (lib.optionals (dev && devPluginPaths != [ ]) [
-              "vim.opt.runtimepath:append('${lib.concatStringsSep "," devPluginPaths}')"
-              "vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}')"
+            ++ (lib.optionals (dev && devPlugins != [ ]) [
+              "vim.opt.runtimepath:append('${lib.concatStringsSep "," devPlugins}')"
+              "vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPlugins}')"
             ])
             ++ (lib.mapAttrsToList
               (
@@ -223,7 +224,6 @@ lib.makeOverridable (
             )
           )
           + "\""
-
         )
         "--set"
         "NVIM_APPNAME"

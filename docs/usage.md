@@ -1,4 +1,7 @@
-## Usage
+---
+title: Usage
+---
+# {{ $frontmatter.title }}
 
 Add the flake input
 

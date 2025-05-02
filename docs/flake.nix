@@ -34,7 +34,7 @@
               (lib.evalModules {
                 specialArgs = { inherit pkgs; };
                 modules = [
-                  ../modules/options.nix
+                  (import ../modules/options.nix true)
                 ];
               })
             )

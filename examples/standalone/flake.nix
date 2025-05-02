@@ -23,15 +23,17 @@
             initLua = ''
               require('myconfig')
             '';
-            devExcludedPlugins = [
-              ./nvim
-            ];
-            devPluginPaths = [
-              # This normally should be a absolute path
-              # here it'll only work from this directory
-              "./nvim"
-            ];
-            plugins = [ pkgs.vimPlugins.oil-nvim ];
+            plugins = {
+              start = [ pkgs.vimPlugins.oil-nvim ];
+              dev.myconfig = {
+                pure = ./nvim;
+                impure =
+                  # This normally should be a absolute path
+                  # here it'll only work from this directory
+                  "./nvim";
+              };
+
+            };
           };
 
           dev = self.packages.x86_64-linux.default.devMode;
