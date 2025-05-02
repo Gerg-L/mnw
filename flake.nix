@@ -23,7 +23,7 @@
                 modulesPath = toString ./modules;
               };
               modules = [
-                ./modules/options.nix
+                (import ./modules/options.nix false)
                 module
               ];
             };

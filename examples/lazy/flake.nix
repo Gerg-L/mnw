@@ -16,16 +16,6 @@
       packages.x86_64-linux =
         let
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          lazify = plugins: map (plugin: plugin // { optional = true; }) plugins;
-
-          nonLazyPlugins = [
-            pkgs.vimPlugins.lz-n
-          ];
-
-          # Anything that you're loading lazily should be put here
-          lazyPlugins = lazify [
-            pkgs.vimPlugins.oil-nvim
-          ];
         in
         {
           default = mnw.lib.wrap pkgs {
@@ -37,17 +27,24 @@
               require('myconfig')
               require('lz.n').load('lazy')
             '';
+            plugins = {
+              start = [
+                pkgs.vimPlugins.lz-n
+              ];
 
-            devExcludedPlugins = [
-              ./nvim
-            ];
-            devPluginPaths = [
-              # This normally should be a absolute path
-              # here it'll only work from this directory
-              "./nvim"
-            ];
+              # Anything that you're loading lazily should be put here
+              opt = [
+                pkgs.vimPlugins.oil-nvim
+              ];
 
-            plugins = nonLazyPlugins ++ lazyPlugins;
+              dev.myconfig = {
+                pure = ./nvim;
+                impure =
+                  # This normally should be a absolute path
+                  # here it'll only work from this directory
+                  "./nvim";
+              };
+            };
           };
 
           dev = self.packages.x86_64-linux.default.devMode;

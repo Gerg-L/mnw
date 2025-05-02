@@ -9,7 +9,11 @@ import { data } from "./mnw.data.js";
 import { RenderDocs } from "easy-nix-documentation";
 </script>
 
-<RenderDocs :options="data" :exclude="/providers\.*/" />
+<RenderDocs :options="data" :exclude="/providers\.*|plugins\.*/" />
+
+## Plugins Configuration
+
+<RenderDocs :options="data" :include="/plugins\.*/" />
 
 ## Provider Configuration
 
