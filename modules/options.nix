@@ -6,13 +6,6 @@
 }:
 let
   inherit (lib) types;
-  enabledOption =
-    x:
-    lib.mkEnableOption x
-    // {
-      default = true;
-      example = false;
-    };
   pluginsOption =
     let
       pluginType = types.submodule (
@@ -281,7 +274,10 @@ in
       '';
     };
 
-    desktopEntry = enabledOption "neovim's desktop entry";
+    desktopEntry = lib.mkEnableOption "neovim's desktop entry" // {
+      default = true;
+      example = false;
+    };
 
     providers = {
       nodeJs = {
@@ -338,7 +334,7 @@ in
       };
 
       python3 = {
-        enable = enabledOption "and configure the python3 provider";
+        enable = lib.mkEnableOption "and configure the python3 provider";
         package = lib.mkOption {
           type = types.package;
           default = pkgs.python3;
@@ -365,7 +361,7 @@ in
       };
 
       ruby = {
-        enable = enabledOption "and configure the ruby provider";
+        enable = lib.mkEnableOption "and configure the ruby provider";
         package = lib.mkOption {
           type = types.package;
           default = config.providers.ruby.env.ruby;
