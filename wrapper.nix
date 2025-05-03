@@ -190,46 +190,41 @@ lib.makeOverridable (
           ${lib.optionalString providers.perl.enable "ln -s ${lib.getExe perlEnv} $out/bin/neovim-perl-host"}
         '';
       };
-    providerLua =
-      lib.pipe
-        {
-          node = providers.nodeJs.enable;
-          python = false;
-          python3 = providers.python3.enable;
-          ruby = providers.ruby.enable;
-          perl = providers.perl.enable;
-        }
-        [
-          (lib.mapAttrsToList (
-            prog: withProg:
-            if withProg then
-              "vim.g.${prog}_host_prog='${providersEnv}/bin/neovim-${prog}-host'"
-            else
-              "vim.g.loaded_${prog}_provider=0"
-          ))
-          (lib.concatStringsSep ";")
-        ];
 
     wrapperArgsStr = lib.escapeShellArgs (
-
       [
         "--add-flags"
-        (lib.concatStrings (
-          [
-            ''--cmd "lua ''
-            ''vim.opt.packpath:append('${builtConfigDir}');''
-            ''vim.opt.runtimepath:append('${builtConfigDir}');''
-          ]
-          ++ (lib.optionals (dev && devPluginPaths != [ ]) [
-            ''vim.opt.runtimepath:append('${lib.concatStringsSep "," devPluginPaths}');''
-            ''vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}');''
-          ])
+        (
+          "--cmd \"lua "
+          + lib.concatStringsSep ";" (
+            [
+              "vim.opt.packpath:append('${builtConfigDir}')"
+              "vim.opt.runtimepath:append('${builtConfigDir}')"
+            ]
+            ++ (lib.optionals (dev && devPluginPaths != [ ]) [
+              "vim.opt.runtimepath:append('${lib.concatStringsSep "," devPluginPaths}')"
+              "vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPluginPaths}')"
+            ])
+            ++ (lib.mapAttrsToList
+              (
+                prog: withProg:
+                if withProg then
+                  "vim.g.${prog}_host_prog='${providersEnv}/bin/neovim-${prog}-host'"
+                else
+                  "vim.g.loaded_${prog}_provider=0"
+              )
+              {
+                node = providers.nodeJs.enable;
+                python = false;
+                python3 = providers.python3.enable;
+                ruby = providers.ruby.enable;
+                perl = providers.perl.enable;
+              }
+            )
+          )
+          + "\""
 
-          ++ [
-            providerLua
-            ''"''
-          ]
-        ))
+        )
         "--set"
         "NVIM_APPNAME"
         appName
