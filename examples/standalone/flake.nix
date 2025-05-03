@@ -26,7 +26,10 @@
             plugins = {
               start = [ pkgs.vimPlugins.oil-nvim ];
               dev.myconfig = {
-                pure = ./nvim;
+                pure = {
+                  name = "myconfig";
+                  src = ./nvim;
+                };
                 impure =
                   # This normally should be a absolute path
                   # here it'll only work from this directory

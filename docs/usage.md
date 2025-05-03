@@ -85,9 +85,7 @@ Alternatively set `programs.mnw.enable = false;` and add
 
 To setup hot reloading for quicker neovim config iteration:
 
-Put your config plugin in `devExcludedPlugins`,
-
-and set `devPluginPaths` to the absolute path of the plugin.
+Put your config plugin in `plugins.dev`,
 
 Then you can use the `.devMode` attribute of the created neovim package!
 

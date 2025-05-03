@@ -206,7 +206,10 @@ in
                 {
                   myconfig = {
                     impure = "/home/user/nix-config/nvim";
-                    pure = ./nvim;
+                    pure = {
+                      name = "myconfig";
+                      src = ./nvim;
+                    };
                   };
                 }
               '';
@@ -261,7 +264,10 @@ in
               # see dev mode in the docs
               dev.myconfig = {
                 # This is the recommended way of passing your config
-                pure = ./nvim;
+                pure = { 
+                  name = "myconfig";
+                  src = ./nvim;
+                };
                 impure = "/home/user/nix-config/nvim";
               };
 
