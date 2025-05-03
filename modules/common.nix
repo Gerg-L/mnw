@@ -7,7 +7,10 @@
 {
   options.programs.mnw = lib.mkOption {
     type = lib.types.submoduleWith {
-      specialArgs = { inherit pkgs; };
+      specialArgs = {
+        inherit pkgs;
+        modulesPath = toString ./.;
+      };
       modules = [
         ./options.nix
       ];
