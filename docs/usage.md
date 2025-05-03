@@ -14,10 +14,10 @@ Then use one of the modules or `mnw.lib.wrap`
 ### Wrapper function
 
 The wrapper takes two arguments:
-- a valid instance of `pkgs` or a set of args, passed to the module
+- a valid instance of `pkgs` or a set of specialArgs, passed to the module
   - the set must contain the aforementioned `pkgs` (to be used by the
     wrapper)!
-  - the set can contain extra args you might need in the module (such
+  - the set can contain extra specialArgs you might need in the module (such
     as functions, collections of such, npins/niv pins, etc)
 - a module, containing your setup
 
@@ -30,7 +30,7 @@ let
   # or, if your config is a separate file
   neovim = mnw.lib.wrap pkgs ./config.nix;
 
-  # or, if you need extra args in your module
+  # or, if you need extra specialArgs in your module
   neovim = mnw.lib.wrap {
     inherit inputs pkgs;
     myLib = self.lib;
