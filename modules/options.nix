@@ -7,6 +7,67 @@ docs:
 }:
 let
   inherit (lib) types;
+  pluginType =
+    if docs then
+      pluginType'
+    else
+      types.oneOf [
+        (lib.mkOptionType {
+          name = "path";
+          description = "literal path";
+          descriptionClass = "noun";
+          check = builtins.isPath;
+          merge = lib.mergeEqualOption;
+        })
+        pluginType'
+      ];
+  pluginApply =
+    x:
+    if builtins.isPath x then
+      {
+        # These two are required
+        name = "path-plugin-${builtins.substring 0 7 (builtins.hashString "md5" (toString x))}";
+        outPath = x;
+        # Set everything else as if it's default
+        src = x;
+        python3Dependencies = _: [ ];
+        dependencies = [ ];
+        optional = false;
+      }
+    else
+      x;
+  pluginType' = types.submodule (
+    { config, options, ... }:
+    {
+      freeformType = lib.types.attrsOf lib.types.anything;
+
+      options = {
+        src = lib.mkOption {
+          type = types.pathInStore;
+          description = "Path in store to plugin";
+          default = config.outPath;
+        };
+
+        outPath = lib.mkOption {
+          type = types.pathInStore;
+          description = "Path in store to plugin";
+          default = config.src;
+        };
+
+        dependencies = lib.mkOption {
+          type = types.listOf pluginType;
+          description = "Dependencies of plugin";
+          default = [ ];
+        };
+
+        python3Dependencies = lib.mkOption {
+          type = types.functionTo (types.listOf types.package);
+          description = "A function which returns a list of extra needed python3 packages";
+          default = _: [ ];
+        };
+      };
+    }
+  );
 in
 {
   imports = [
@@ -122,43 +183,11 @@ in
 
     plugins =
       let
-        pluginType = types.submodule (
-          { config, options, ... }:
-          {
-            freeformType = lib.types.attrsOf lib.types.anything;
-
-            options = {
-              src = lib.mkOption {
-                type = types.pathInStore;
-                description = "Path in store to plugin";
-                default = config.outPath;
-              };
-
-              outPath = lib.mkOption {
-                type = types.pathInStore;
-                description = "Path in store to plugin";
-                default = config.src;
-              };
-
-              dependencies = lib.mkOption {
-                type = types.listOf pluginType;
-                description = "Dependencies of plugin";
-                default = [ ];
-              };
-
-              python3Dependencies = lib.mkOption {
-                type = types.functionTo (types.listOf types.package);
-                description = "A function which returns a list of extra needed python3 packages";
-                default = _: [ ];
-              };
-            };
-          }
-        );
-
         type = types.submodule {
           options = {
             start = lib.mkOption {
               type = types.listOf pluginType;
+              apply = map pluginApply;
               default = [ ];
               description = ''
                 Plugins to place in /start
@@ -168,6 +197,7 @@ in
             };
             opt = lib.mkOption {
               type = types.listOf pluginType;
+              apply = map pluginApply;
               default = [ ];
               description = ''
                 Plugins to place in /opt
@@ -177,24 +207,41 @@ in
             };
             dev = lib.mkOption {
               type = types.attrsOf (
-                types.submodule {
-                  options = {
-                    impure = lib.mkOption {
-                      type = types.path;
-                      description = ''
-                        The impure absolute paths to the nvim plugin.
-                      '';
-                      example = lib.literalExpression "/home/user/nix-config/nvim";
+                types.submodule (
+                  { name, ... }:
+                  {
+                    options = {
+                      impure = lib.mkOption {
+                        type = types.path;
+                        description = ''
+                          The impure absolute paths to the nvim plugin.
+                        '';
+                        example = lib.literalExpression "/home/user/nix-config/nvim";
+                      };
+                      pure = lib.mkOption {
+                        type = pluginType;
+                        apply =
+                          x:
+                          if builtins.isPath x then
+                            {
+                              inherit name;
+                              outPath = x;
+                              # Set everything else as if it's default
+                              src = x;
+                              python3Dependencies = _: [ ];
+                              dependencies = [ ];
+                              optional = false;
+                            }
+                          else
+                            x;
+                        description = ''
+                          The pure path to the nvim plugin.
+                        '';
+                        example = lib.literalExpression "./nvim";
+                      };
                     };
-                    pure = lib.mkOption {
-                      type = pluginType;
-                      description = ''
-                        The pure path to the nvim plugin.
-                      '';
-                      example = lib.literalExpression "./nvim";
-                    };
-                  };
-                }
+                  }
+                )
               );
               default = { };
               description = ''
@@ -205,11 +252,8 @@ in
               example = lib.literalExpression ''
                 {
                   myconfig = {
+                    pure = ./nvim;
                     impure = "/home/user/nix-config/nvim";
-                    pure = {
-                      name = "myconfig";
-                      src = ./nvim;
-                    };
                   };
                 }
               '';
@@ -264,10 +308,7 @@ in
               # see dev mode in the docs
               dev.myconfig = {
                 # This is the recommended way of passing your config
-                pure = { 
-                  name = "myconfig";
-                  src = ./nvim;
-                };
+                pure = "myconfig";
                 impure = "/home/user/nix-config/nvim";
               };
 

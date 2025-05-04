@@ -18,10 +18,7 @@
       ];
 
       dev.myconfig = {
-        pure = {
-          name = "myconfig";
-          src = ./nvim;
-        };
+        pure = ./nvim;
         impure =
           # This normally should be a absolute path
           # here it'll only work from this directory
