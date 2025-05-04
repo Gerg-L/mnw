@@ -32,7 +32,6 @@ let
         src = x;
         python3Dependencies = _: [ ];
         dependencies = [ ];
-        optional = false;
       }
     else
       x;
@@ -236,7 +235,6 @@ in
                               src = x;
                               python3Dependencies = _: [ ];
                               dependencies = [ ];
-                              optional = false;
                             }
                           else
                             x;
