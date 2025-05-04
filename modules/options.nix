@@ -52,10 +52,12 @@ let
           type = types.pathInStore;
           description = "Path in store to plugin";
           default = config.src;
+          visible = false;
         };
 
         dependencies = lib.mkOption {
           type = types.listOf pluginType;
+          visible = "shallow";
           description = "Dependencies of plugin";
           default = [ ];
         };
@@ -188,6 +190,7 @@ in
             start = lib.mkOption {
               type = types.listOf pluginType;
               apply = map pluginApply;
+              visible = "shallow";
               default = [ ];
               description = ''
                 Plugins to place in /start
@@ -198,6 +201,7 @@ in
             opt = lib.mkOption {
               type = types.listOf pluginType;
               apply = map pluginApply;
+              visible = "shallow";
               default = [ ];
               description = ''
                 Plugins to place in /opt
@@ -220,6 +224,8 @@ in
                       };
                       pure = lib.mkOption {
                         type = pluginType;
+
+                        visible = "shallow";
                         apply =
                           x:
                           if builtins.isPath x then
