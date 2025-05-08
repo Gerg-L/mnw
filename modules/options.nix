@@ -215,7 +215,16 @@ in
                   {
                     options = {
                       impure = lib.mkOption {
-                        type = types.path;
+                        type = types.path // {
+                          check =
+                            # a trimmed down version of
+                            # https://github.com/NixOS/nixpkgs/blob/16762245d811fdd74b417cc922223dc8eb741e8b/lib/types.nix#L696
+                            x:
+                            builtins.elem (builtins.substring 0 1 (toString x)) [
+                              "/"
+                              "~"
+                            ];
+                        };
                         description = ''
                           The impure absolute paths to the nvim plugin.
                         '';
