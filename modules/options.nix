@@ -220,10 +220,11 @@ in
                             # a trimmed down version of
                             # https://github.com/NixOS/nixpkgs/blob/16762245d811fdd74b417cc922223dc8eb741e8b/lib/types.nix#L696
                             x:
-                            builtins.elem (builtins.substring 0 1 (toString x)) [
-                              "/"
-                              "~"
-                            ];
+                            let
+                              # nixpkgs hashPrefix has a path check which will spit a warning
+                              hasPrefix = pref: (builtins.substring 0 (builtins.stringLength pref) (toString x)) == pref;
+                            in
+                            hasPrefix "/" || hasPrefix "~/";
                         };
                         description = ''
                           The impure absolute paths to the nvim plugin.
