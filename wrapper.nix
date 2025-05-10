@@ -122,6 +122,7 @@ lib.makeOverridable (
           ''
 
         );
+
       postBuild = ''
         mkdir $out/nix-support
         for i in $(find -L $out -name propagated-build-inputs ); do
@@ -147,12 +148,17 @@ lib.makeOverridable (
         source '${neovim.lua}/nix-support/utils.sh'
         if declare -f -F "_addToLuaPath" > /dev/null; then
           _addToLuaPath "$out"
-          if [[ -v LUA_PATH ]]; then
-            LUA_PATH="$LUA_PATH;"
-          fi
-          if [[ -v LUA_CPATH ]]; then
-            LUA_CPATH="$LUA_CPATH;"
-          fi
+        fi
+
+        if [[ "$LUA_PATH" == ";;" ]]; then
+          export LUA_PATH=""
+        else
+          export LUA_PATH="''${LUA_PATH:-}"
+        fi
+        if [[ "$LUA_CPATH" == ";;" ]]; then
+          export LUA_CPATH=""
+        else
+          export LUA_CPATH="''${LUA_CPATH:-}"
         fi
         envsubst < '${generatedInitLua}' > "$out/init.lua"
       '';
