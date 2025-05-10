@@ -28,9 +28,9 @@
               dev.myconfig = {
                 pure = ./nvim;
                 impure =
-                  # This normally should be a absolute path
+                  # This is a hack it should be a absolute path
                   # here it'll only work from this directory
-                  "./nvim";
+                  "/' .. vim.uv.cwd()  .. '/nvim";
               };
 
             };
