@@ -1,8 +1,6 @@
 {
   lib,
   makeShellWrapper,
-  linkFarm,
-  runCommand,
   buildEnv,
   writeText,
   lndir,
@@ -27,17 +25,20 @@ lib.makeOverridable (
     dev ? false,
     plugins,
     ...
-  # ^This is needed because of the renamed options
-  # remove when they are removed
   }@mnwWrapperArgs:
   let
+
     python3 = providers.python3.package;
 
     devPlugins = builtins.attrValues (
       builtins.mapAttrs (_: v: builtins.getAttr (if dev then "impure" else "pure") v) plugins.dev
     );
 
-    optPlugins = plugins.opt;
+    # ensure there's only one plugin with each name
+    # ideally this would be fixed in the module system
+    foldPlugins = p: builtins.attrValues (lib.foldl (a: b: a // { "${lib.getName b}" = b; }) { } p);
+
+    optPlugins = foldPlugins plugins.opt;
 
     startPlugins =
       let
@@ -64,9 +65,10 @@ lib.makeOverridable (
         only nixpkgs plugins have dependencies though
         so it should be okay
       */
-
-      lib.optionals (!dev) devPlugins
-      ++ lib.unique (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)));
+      foldPlugins (
+        lib.optionals (!dev) devPlugins
+        ++ (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)))
+      );
 
     allPython3Dependencies = lib.pipe (startPlugins ++ optPlugins) [
       (lib.concatMap (plugin: plugin.python3Dependencies))
@@ -94,74 +96,73 @@ lib.makeOverridable (
         ${sourceVimL}
       '';
 
-    builtConfigDir = buildEnv {
-      name = "neovim-pack-dir";
-
+    builtConfigDir = stdenvNoCC.mkDerivation {
+      name = "builtConfigDir";
       nativeBuildInputs = [ envsubst ];
 
-      paths =
+      buildCommand =
         let
-          vimFarm =
-            name: plugins:
-            linkFarm "${name}-configdir" (
-              map (drv: {
-                name = "pack/mnw/${name}/${lib.getName drv}";
-                path = drv.outPath;
-              }) plugins
-            );
+          pluginsToArray = name: list: map (x: ''["pack/mnw/${name}/${lib.getName x}"]="${x}" '') list;
+          assocArray = lib.concatStrings (
+            pluginsToArray "start" startPlugins ++ pluginsToArray "opt" optPlugins
+          );
         in
-        [
-          (vimFarm "start" startPlugins)
-          (vimFarm "opt" optPlugins)
-        ]
-        ++ lib.optional (allPython3Dependencies != [ ]) (
-          runCommand "vim-python3-deps" { } ''
-            mkdir -p $out/pack/mnw/start/__python3_dependencies
-            ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/pack/mnw/start/__python3_dependencies/python3
-          ''
+        ''
+          # lua
+          mkdir -p $out/nix-support
+          for i in $(find -L $out -name propagated-build-inputs ); do
+            cat "$i" >> $out/nix-support/propagated-build-inputs
+          done
+          source '${neovim.lua}/nix-support/utils.sh'
+          if declare -f -F "_addToLuaPath" > /dev/null; then
+            _addToLuaPath "$out"
+          fi
 
-        );
+          if [[ "$LUA_PATH" == ";;" ]]; then
+            export LUA_PATH=""
+          else
+            export LUA_PATH="''${LUA_PATH:-}"
+          fi
+          if [[ "$LUA_CPATH" == ";;" ]]; then
+            export LUA_CPATH=""
+          else
+            export LUA_CPATH="''${LUA_CPATH:-}"
+          fi
+          envsubst < '${generatedInitLua}' > "$out/init.lua"
 
-      postBuild = ''
-        mkdir $out/nix-support
-        for i in $(find -L $out -name propagated-build-inputs ); do
-          cat "$i" >> $out/nix-support/propagated-build-inputs
-        done
+          declare -rA array=(${assocArray})
 
-        # Semi-cursed helptag generation
-        mkdir -p $out/doc
-        pushd $out/doc
-        for ppath in ../pack/mnw/*/*/doc
-        do
-        if [ ! -e "$ppath/tags" ]; then
-          PLUGIN_DIR=$(basename ''${ppath::-4})
-          ln -snf "$ppath" "$PLUGIN_DIR"
-        fi
-        done
-        if [ -n "$(ls $out/doc)" ]; then
-          ${lib.getExe neovim} -es --headless -N -u NONE -i NONE -n -V1 \
-            -c "helptags $out/doc" -c "quit!"
-        fi
-        popd
+          for path in "''${!array[@]}"
+          do
+            source="''${array["$path"]}"
+            if [[ -e "$source/doc" ]] && [[ ! -e "$source/doc/tags" ]]; then
+              mkdir -p "$out/$path/doc"
+              ln -ns "$source/doc"* -t "$out/$path/doc"
+            fi
+          done
 
-        source '${neovim.lua}/nix-support/utils.sh'
-        if declare -f -F "_addToLuaPath" > /dev/null; then
-          _addToLuaPath "$out"
-        fi
+          ${lib.getExe neovim} --headless -n -u NONE -i NONE \
+            -c "set packpath=$out" \
+            -c "packloadall" \
+            -c "helptags ALL" \
+            "+quit!"
 
-        if [[ "$LUA_PATH" == ";;" ]]; then
-          export LUA_PATH=""
-        else
-          export LUA_PATH="''${LUA_PATH:-}"
-        fi
-        if [[ "$LUA_CPATH" == ";;" ]]; then
-          export LUA_CPATH=""
-        else
-          export LUA_CPATH="''${LUA_CPATH:-}"
-        fi
-        envsubst < '${generatedInitLua}' > "$out/init.lua"
-      '';
-    };
+          for path in "''${!array[@]}"
+          do
+            source="''${array["$path"]}"
+            mkdir -p "$out/$path"
+            ln -ns "$source/"*[!'doc'] -t "$out/$path"
+          done
+
+        ''
+        + lib.optionalString (allPython3Dependencies != [ ]) ''
+          # python stuff
+          mkdir -p "$out/pack/mnw/start/__python3_dependencies"
+          ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
+        '';
+    }
+
+    ;
 
     providersEnv =
       let
