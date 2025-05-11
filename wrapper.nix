@@ -95,6 +95,41 @@ lib.makeOverridable (
         ${sourceVimL}
       '';
 
+    nonNixpkgsPlugins = builtins.filter (x: !(x.passthru.vimPlugin or false)) (
+      plugins.start
+      ++ plugins.opt
+      ++ (lib.optionals (!dev) (builtins.catAttrs "pure" (builtins.attrValues plugins.dev)))
+    );
+
+    helpTags = linkFarm "mnw-helpTags" (
+      map (
+        x:
+        let
+          name = lib.getName x;
+        in
+        {
+          name = "pack/mnw-helptags/start/${name}";
+          path =
+            runCommand "${name}-docs"
+              {
+                env.plugin = toString x;
+              }
+              ''
+                mkdir -p "$out/doc"
+                if [ -e "$plugin/doc/tags" ]; then
+                  exit 0
+                fi
+
+                if [ -e "$plugin/doc" ]; then
+                  ln -s "$plugin/doc/"* -t "$out/doc"
+                  ${lib.getExe neovim} -es --headless -N -u NONE -i NONE -n -V1 \
+                    -c "helptags $out/doc" \
+                    -c "quit!"
+                fi
+              '';
+        }
+      ) nonNixpkgsPlugins
+    );
     builtConfigDir = buildEnv {
       name = "neovim-pack-dir";
 
@@ -114,6 +149,7 @@ lib.makeOverridable (
         [
           (vimFarm "start" startPlugins)
           (vimFarm "opt" optPlugins)
+          helpTags
         ]
         ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
           runCommand "vim-python3-deps" { } ''
@@ -128,22 +164,6 @@ lib.makeOverridable (
         for i in $(find -L $out -name propagated-build-inputs ); do
           cat "$i" >> $out/nix-support/propagated-build-inputs
         done
-
-        # Semi-cursed helptag generation
-        mkdir -p $out/doc
-        pushd $out/doc
-        for ppath in ../pack/mnw/*/*/doc
-        do
-        if [ ! -e "$ppath/tags" ]; then
-          PLUGIN_DIR=$(basename ''${ppath::-4})
-          ln -snf "$ppath" "$PLUGIN_DIR"
-        fi
-        done
-        if [ -n "$(ls $out/doc)" ]; then
-          ${lib.getExe neovim} -es --headless -N -u NONE -i NONE -n -V1 \
-            -c "helptags $out/doc" -c "quit!"
-        fi
-        popd
 
         source '${neovim.lua}/nix-support/utils.sh'
         if declare -f -F "_addToLuaPath" > /dev/null; then
