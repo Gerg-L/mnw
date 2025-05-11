@@ -257,7 +257,7 @@ lib.makeOverridable (
     strictDeps = true;
 
     # Massively reduces build times
-    dontRewriteSymlinks = true;
+    dontFixup = true;
 
     installPhase = ''
       runHook preInstall
