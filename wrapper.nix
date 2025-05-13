@@ -68,12 +68,11 @@ lib.makeOverridable (
       lib.optionals (!dev) devPlugins
       ++ lib.unique (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)));
 
-    allPython3Dependencies =
-      ps:
-      lib.pipe startPlugins [
-        (lib.concatMap (plugin: plugin.python3Dependencies ps))
-        lib.unique
-      ];
+    allPython3Dependencies = lib.pipe (startPlugins ++ optPlugins) [
+      (lib.concatMap (plugin: plugin.python3Dependencies))
+      lib.unique
+    ];
+
     generatedInitLua =
       let
         luaEnv = neovim.lua.withPackages extraLuaPackages;
@@ -151,7 +150,7 @@ lib.makeOverridable (
           (vimFarm "opt" optPlugins)
           helpTags
         ]
-        ++ lib.optional (allPython3Dependencies python3.pkgs != [ ]) (
+        ++ lib.optional (allPython3Dependencies != [ ]) (
           runCommand "vim-python3-deps" { } ''
             mkdir -p $out/pack/mnw/start/__python3_dependencies
             ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/pack/mnw/start/__python3_dependencies/python3
@@ -186,9 +185,7 @@ lib.makeOverridable (
 
     providersEnv =
       let
-        pythonEnv = python3.withPackages (
-          ps: providers.python3.extraPackages ps ++ allPython3Dependencies ps
-        );
+        pythonEnv = python3.withPackages (p: (providers.python3.extraPackages p) ++ allPython3Dependencies);
 
         perlEnv = providers.perl.package.withPackages providers.perl.extraPackages;
       in
@@ -299,6 +296,7 @@ lib.makeOverridable (
     passthru =
       {
         inherit builtConfigDir;
+        config = mnwWrapperArgs;
       }
       // lib.optionalAttrs (!dev) {
         devMode = (callPackage ./wrapper.nix callPackageArgs) (mnwWrapperArgs // { dev = true; });
