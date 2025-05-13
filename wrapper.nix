@@ -1,7 +1,6 @@
 {
   lib,
   makeShellWrapper,
-  linkFarm,
   runCommand,
   buildEnv,
   writeText,
@@ -31,13 +30,28 @@ lib.makeOverridable (
   # remove when they are removed
   }@mnwWrapperArgs:
   let
+
     python3 = providers.python3.package;
 
     devPlugins = builtins.attrValues (
       builtins.mapAttrs (_: v: builtins.getAttr (if dev then "impure" else "pure") v) plugins.dev
     );
 
-    optPlugins = plugins.opt;
+    stripPlugins =
+      x:
+      lib.unique (
+        map (
+          v:
+          # This is required because of builtins.elem not working on functions
+          {
+            inherit (v) outPath python3Dependencies dependencies;
+          }
+          // (lib.optionalAttrs (v ? pname) { inherit (v) pname; })
+          // (lib.optionalAttrs (v ? name) { inherit (v) name; })
+        ) x
+      );
+
+    optPlugins = stripPlugins plugins.opt;
 
     startPlugins =
       let
@@ -64,9 +78,10 @@ lib.makeOverridable (
         only nixpkgs plugins have dependencies though
         so it should be okay
       */
-
-      lib.optionals (!dev) devPlugins
-      ++ lib.unique (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)));
+      stripPlugins (
+        lib.optionals (!dev) devPlugins
+        ++ (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)))
+      );
 
     allPython3Dependencies = lib.pipe (startPlugins ++ optPlugins) [
       (lib.concatMap (plugin: plugin.python3Dependencies))
@@ -94,94 +109,69 @@ lib.makeOverridable (
         ${sourceVimL}
       '';
 
-    nonNixpkgsPlugins = builtins.filter (x: !(x.passthru.vimPlugin or false)) (
-      plugins.start
-      ++ plugins.opt
-      ++ (lib.optionals (!dev) (builtins.catAttrs "pure" (builtins.attrValues plugins.dev)))
-    );
-
-    helpTags = linkFarm "mnw-helpTags" (
-      map (
-        x:
-        let
-          name = lib.getName x;
-        in
+    builtConfigDir =
+      let
+        pack =
+          name: list: lib.concatMapStringsSep ";" (x: "fn '${x}' 'pack/mnw/${name}/${lib.getName x}'") list;
+      in
+      runCommand "builtConfigDir"
         {
-          name = "pack/mnw-helptags/start/${name}";
-          path =
-            runCommand "${name}-docs"
-              {
-                env.plugin = toString x;
-              }
-              ''
-                mkdir -p "$out/doc"
-                if [ -e "$plugin/doc/tags" ]; then
-                  exit 0
-                fi
-
-                if [ -e "$plugin/doc" ]; then
-                  ln -s "$plugin/doc/"* -t "$out/doc"
-                  ${lib.getExe neovim} -es --headless -N -u NONE -i NONE -n -V1 \
-                    -c "helptags $out/doc" \
-                    -c "quit!"
-                fi
-              '';
+          nativeBuildInputs = [ envsubst ];
         }
-      ) nonNixpkgsPlugins
-    );
-    builtConfigDir = buildEnv {
-      name = "neovim-pack-dir";
+        ''
+           # lua
+           mkdir -p $out/nix-support
+           for i in $(find -L $out -name propagated-build-inputs ); do
+             cat "$i" >> $out/nix-support/propagated-build-inputs
+           done
+           source '${neovim.lua}/nix-support/utils.sh'
+           if declare -f -F "_addToLuaPath" > /dev/null; then
+             _addToLuaPath "$out"
+           fi
 
-      nativeBuildInputs = [ envsubst ];
+           if [[ "$LUA_PATH" == ";;" ]]; then
+             export LUA_PATH=""
+           else
+             export LUA_PATH="''${LUA_PATH:-}"
+           fi
+           if [[ "$LUA_CPATH" == ";;" ]]; then
+             export LUA_CPATH=""
+           else
+             export LUA_CPATH="''${LUA_CPATH:-}"
+           fi
+           envsubst < '${generatedInitLua}' > "$out/init.lua"
 
-      paths =
-        let
-          vimFarm =
-            name: plugins:
-            linkFarm "${name}-configdir" (
-              map (drv: {
-                name = "pack/mnw/${name}/${lib.getName drv}";
-                path = drv.outPath;
-              }) plugins
-            );
-        in
-        [
-          (vimFarm "start" startPlugins)
-          (vimFarm "opt" optPlugins)
-          helpTags
-        ]
-        ++ lib.optional (allPython3Dependencies != [ ]) (
-          runCommand "vim-python3-deps" { } ''
-            mkdir -p $out/pack/mnw/start/__python3_dependencies
-            ln -s ${python3.withPackages allPython3Dependencies}/${python3.sitePackages} $out/pack/mnw/start/__python3_dependencies/python3
-          ''
+           # plugin stuff
+           fn () {
+             mkdir -p "$out/$2"
+             ln -ns "$1/"* -t "$out/$2"
+             if [[ -e "$1/doc" ]] && [[ ! -e "$1/doc/tags" ]]; then
+               rm "$out/$2/doc"
+               mkdir -p "$out/$2/doc"
+               ln -ns "$1/doc/"* -t "$out/$2/doc"
+             fi
+           }
 
-        );
+          ${pack "start" startPlugins}
+          ${pack "opt" optPlugins}
 
-      postBuild = ''
-        mkdir $out/nix-support
-        for i in $(find -L $out -name propagated-build-inputs ); do
-          cat "$i" >> $out/nix-support/propagated-build-inputs
-        done
+          mkdir -p "$out/doc"
+          cd "$out/doc"
 
-        source '${neovim.lua}/nix-support/utils.sh'
-        if declare -f -F "_addToLuaPath" > /dev/null; then
-          _addToLuaPath "$out"
-        fi
+          ${lib.getExe neovim} --headless -n -u NONE -i NONE \
+            -c "set packpath=$out" \
+            -c "packloadall" \
+            -c "helptags ALL" \
+            "+quit!"
 
-        if [[ "$LUA_PATH" == ";;" ]]; then
-          export LUA_PATH=""
-        else
-          export LUA_PATH="''${LUA_PATH:-}"
-        fi
-        if [[ "$LUA_CPATH" == ";;" ]]; then
-          export LUA_CPATH=""
-        else
-          export LUA_CPATH="''${LUA_CPATH:-}"
-        fi
-        envsubst < '${generatedInitLua}' > "$out/init.lua"
-      '';
-    };
+        ''
+      + lib.optionalString (allPython3Dependencies != [ ]) ''
+        # python stuff
+        mkdir -p "$out/pack/mnw/start/__python3_dependencies"
+        ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
+      ''
+
+    ;
 
     providersEnv =
       let
