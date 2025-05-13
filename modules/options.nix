@@ -7,6 +7,21 @@ docs:
 }:
 let
   inherit (lib) types;
+  listOfOrFuncTo = types.oneOf [
+    (types.functionTo (types.listOf types.package))
+    (types.listOf types.package)
+  ];
+
+  python3Opt =
+    attrs:
+    lib.mkOption (
+      {
+        type = listOfOrFuncTo;
+        default = [ ];
+      }
+      // attrs
+    );
+
   pluginType =
     if docs then
       pluginType'
@@ -30,7 +45,7 @@ let
         outPath = x;
         # Set everything else as if it's default
         src = x;
-        python3Dependencies = _: [ ];
+        python3Dependencies = [ ];
         dependencies = [ ];
       }
     else
@@ -61,10 +76,8 @@ let
           default = [ ];
         };
 
-        python3Dependencies = lib.mkOption {
-          type = types.functionTo (types.listOf types.package);
-          description = "A function which returns a list of extra needed python3 packages";
-          default = _: [ ];
+        python3Dependencies = python3Opt {
+          description = "Extra python3 packages";
         };
       };
     }
@@ -173,10 +186,13 @@ in
     };
 
     extraLuaPackages = lib.mkOption {
-      type = types.functionTo (types.listOf types.package);
-      default = _: [ ];
-      defaultText = lib.literalExpression "ps: [ ]";
-      description = "A function which returns a list of extra needed lua packages.";
+      type = listOfOrFuncTo;
+      default = [ ];
+      defaultText = lib.literalExpression "[ ]";
+      description = ''
+        A function which returns a list of extra needed lua packages.
+        or a list of lua packages.
+      '';
       example = lib.literalExpression ''
         ps: [ ps.jsregexp ]
       '';
@@ -243,7 +259,7 @@ in
                               outPath = x;
                               # Set everything else as if it's default
                               src = x;
-                              python3Dependencies = _: [ ];
+                              python3Dependencies = [ ];
                               dependencies = [ ];
                             }
                           else
@@ -431,7 +447,7 @@ in
           example = lib.literalExpression "pkgs.perl";
         };
         extraPackages = lib.mkOption {
-          type = types.functionTo (types.listOf types.package);
+          type = listOfOrFuncTo;
           default = p: [
             p.NeovimExt
             p.Appcpanminus
@@ -465,18 +481,14 @@ in
           description = "The python3 package to use.";
           example = lib.literalExpression "pkgs.python39";
         };
-        extraPackages = lib.mkOption {
-          type = types.functionTo (types.listOf types.package);
+        extraPackages = python3Opt {
           default = p: [ p.pynvim ];
           defaultText = lib.literalExpression "p: [ ppynvim ]";
           description = ''
             Extra packages to be included in the python3 environment.
-
-            Note: you probably want to include pynvim if you change this from it's default value.
           '';
           example = lib.literalExpression ''
             py: [
-              py.pynvim
               py.pybtex
             ]
           '';
