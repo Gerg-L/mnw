@@ -205,11 +205,11 @@ lib.makeOverridable (
           "--cmd \"lua "
           + lib.concatStringsSep ";" (
             [
-              "vim.opt.packpath:append('${builtConfigDir}')"
-              "vim.opt.runtimepath:append('${builtConfigDir}')"
+              "vim.opt.packpath:prepend('${builtConfigDir}')"
+              "vim.opt.runtimepath:prepend('${builtConfigDir}')"
             ]
             ++ (lib.optionals (dev && devPlugins != [ ]) [
-              "vim.opt.runtimepath:append('${lib.concatStringsSep "," devPlugins}')"
+              "vim.opt.runtimepath:prepend('${lib.concatStringsSep "," devPlugins}')"
               "vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPlugins}')"
             ])
             ++ (lib.mapAttrsToList
