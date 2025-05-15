@@ -153,6 +153,9 @@ lib.makeOverridable (
               source="''${array["$path"]}"
               mkdir -p "$out/$path"
               ln -ns "$source/"*[!'doc'] -t "$out/$path"
+              if [[ -e "$source/doc" ]] && [[ ! -e "$out/$path/doc" ]]; then
+                ln -ns "$source/doc" -t "$out/$path"
+              fi
             done
 
             ${lib.optionalString (allPython3Dependencies python3.pkgs != [ ]) ''
