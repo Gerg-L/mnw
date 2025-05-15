@@ -70,11 +70,12 @@ lib.makeOverridable (
         ++ (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)))
       );
 
-    allPython3Dependencies = lib.pipe (startPlugins ++ optPlugins) [
-      (lib.concatMap (plugin: plugin.python3Dependencies))
-      lib.unique
-    ];
-
+    allPython3Dependencies =
+      ps:
+      lib.pipe startPlugins [
+        (lib.concatMap (plugin: plugin.python3Dependencies ps))
+        lib.unique
+      ];
     generatedInitLua =
       let
         luaEnv = neovim.lua.withPackages extraLuaPackages;
@@ -154,7 +155,7 @@ lib.makeOverridable (
               ln -ns "$source/"*[!'doc'] -t "$out/$path"
             done
 
-            ${lib.optionalString (allPython3Dependencies != [ ]) ''
+            ${lib.optionalString (allPython3Dependencies python3.pkgs != [ ]) ''
               # python stuff
               mkdir -p "$out/pack/mnw/start/__python3_dependencies"
               ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
@@ -166,7 +167,9 @@ lib.makeOverridable (
 
     providersEnv =
       let
-        pythonEnv = python3.withPackages (p: (providers.python3.extraPackages p) ++ allPython3Dependencies);
+        pythonEnv = python3.withPackages (
+          ps: providers.python3.extraPackages ps ++ allPython3Dependencies ps
+        );
 
         perlEnv = providers.perl.package.withPackages providers.perl.extraPackages;
       in
