@@ -97,74 +97,73 @@ lib.makeOverridable (
         ${sourceVimL}
       '';
 
-    builtConfigDir =
-      let
-        pluginsToArray = name: list: map (x: ''["pack/mnw/${name}/${lib.getName x}"]="${x}" '') list;
-        assocArray = lib.concatStrings (
-          pluginsToArray "start" startPlugins ++ pluginsToArray "opt" optPlugins
-        );
-      in
-      stdenvNoCC.mkDerivation {
-        name = "builtConfigDir";
-        nativeBuildInputs = [ envsubst ];
+    builtConfigDir = stdenvNoCC.mkDerivation {
+      name = "builtConfigDir";
+      nativeBuildInputs = [ envsubst ];
+      __structuredAttrs = true;
 
-        buildCommand = # bash
-          ''
-            mkdir -p $out/nix-support
-            for i in $(find -L $out -name propagated-build-inputs ); do
-              cat "$i" >> $out/nix-support/propagated-build-inputs
-            done
-            source '${neovim.lua}/nix-support/utils.sh'
-            if declare -f -F "_addToLuaPath" > /dev/null; then
-              _addToLuaPath "$out"
+      sourcesArray = startPlugins ++ optPlugins;
+      pathsArray =
+        let
+          fn = name: list: map (x: "pack/mnw/${name}/" + lib.getName x) list;
+        in
+        (fn "start" startPlugins) ++ (fn "opt" optPlugins);
+
+      buildCommand = # bash
+        ''
+          mkdir -p $out/nix-support
+          for i in $(find -L $out -name propagated-build-inputs ); do
+            cat "$i" >> $out/nix-support/propagated-build-inputs
+          done
+          source '${neovim.lua}/nix-support/utils.sh'
+          if declare -f -F "_addToLuaPath" > /dev/null; then
+            _addToLuaPath "$out"
+          fi
+
+          if [[ "$LUA_PATH" == ";;" ]]; then
+            export LUA_PATH=""
+          else
+            export LUA_PATH="''${LUA_PATH:-}"
+          fi
+          if [[ "$LUA_CPATH" == ";;" ]]; then
+            export LUA_CPATH=""
+          else
+            export LUA_CPATH="''${LUA_CPATH:-}"
+          fi
+          envsubst < '${generatedInitLua}' > "$out/init.lua"
+          for ((i = 0 ; i < "''${#pathsArray[@]}" ; i++ ))
+          do
+            path="''${pathsArray["$i"]}"
+            source="''${sourcesArray["$i"]}"
+            if [[ -e "$source/doc" ]] && [[ ! -e "$source/doc/tags" ]]; then
+              mkdir -p "$out/$path/doc"
+              ln -ns "$source/doc"* -t "$out/$path/doc"
             fi
+          done
 
-            if [[ "$LUA_PATH" == ";;" ]]; then
-              export LUA_PATH=""
-            else
-              export LUA_PATH="''${LUA_PATH:-}"
+          ${lib.getExe neovim} --headless -n -u NONE -i NONE \
+            -c "set packpath=$out" \
+            -c "packloadall" \
+            -c "helptags ALL" \
+            "+quit!"
+
+          for ((i = 0 ; i < "''${#pathsArray[@]}" ; i++ ))
+          do
+            path="''${pathsArray["$i"]}"
+            source="''${sourcesArray["$i"]}"
+            mkdir -p "$out/$path"
+            ln -ns "$source/"*[!'doc'] -t "$out/$path"
+            if [[ -e "$source/doc" ]] && [[ ! -e "$out/$path/doc" ]]; then
+              ln -ns "$source/doc" -t "$out/$path"
             fi
-            if [[ "$LUA_CPATH" == ";;" ]]; then
-              export LUA_CPATH=""
-            else
-              export LUA_CPATH="''${LUA_CPATH:-}"
-            fi
-            envsubst < '${generatedInitLua}' > "$out/init.lua"
-
-            declare -rA array=(${assocArray})
-
-            for path in "''${!array[@]}"
-            do
-              source="''${array["$path"]}"
-              if [[ -e "$source/doc" ]] && [[ ! -e "$source/doc/tags" ]]; then
-                mkdir -p "$out/$path/doc"
-                ln -ns "$source/doc"* -t "$out/$path/doc"
-              fi
-            done
-
-            ${lib.getExe neovim} --headless -n -u NONE -i NONE \
-              -c "set packpath=$out" \
-              -c "packloadall" \
-              -c "helptags ALL" \
-              "+quit!"
-
-            for path in "''${!array[@]}"
-            do
-              source="''${array["$path"]}"
-              mkdir -p "$out/$path"
-              ln -ns "$source/"*[!'doc'] -t "$out/$path"
-              if [[ -e "$source/doc" ]] && [[ ! -e "$out/$path/doc" ]]; then
-                ln -ns "$source/doc" -t "$out/$path"
-              fi
-            done
-
-            ${lib.optionalString (allPython3Dependencies python3.pkgs != [ ]) ''
-              # python stuff
-              mkdir -p "$out/pack/mnw/start/__python3_dependencies"
-              ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
-            ''}
-          '';
-      }
+          done
+          ${lib.optionalString (allPython3Dependencies python3.pkgs != [ ]) ''
+            # python stuff
+            mkdir -p "$out/pack/mnw/start/__python3_dependencies"
+            ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
+          ''}
+        '';
+    }
 
     ;
 
