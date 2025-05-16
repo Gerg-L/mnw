@@ -111,9 +111,9 @@ lib.makeOverridable (
 
       buildCommand = # bash
         ''
-          mkdir -p $out/nix-support
-          for i in $(find -L $out -name propagated-build-inputs ); do
-            cat "$i" >> $out/nix-support/propagated-build-inputs
+          mkdir -p "$out/nix-support"
+          for i in $(find -L "$out" -name 'propagated-build-inputs'); do
+            cat "$i" >> "$out/nix-support/propagated-build-inputs"
           done
           source '${neovim.lua}/nix-support/utils.sh'
           if declare -f -F "_addToLuaPath" > /dev/null; then
@@ -131,7 +131,7 @@ lib.makeOverridable (
             export LUA_CPATH="''${LUA_CPATH:-}"
           fi
           envsubst < '${generatedInitLua}' > "$out/init.lua"
-          for ((i = 0 ; i < "''${#pathsArray[@]}" ; i++ ))
+          for ((i = 0; i < "''${#pathsArray[@]}"; i++ ))
           do
             path="''${pathsArray["$i"]}"
             source="''${sourcesArray["$i"]}"
@@ -147,7 +147,7 @@ lib.makeOverridable (
             -c "helptags ALL" \
             "+quit!"
 
-          for ((i = 0 ; i < "''${#pathsArray[@]}" ; i++ ))
+          for ((i = 0; i < "''${#pathsArray[@]}"; i++ ))
           do
             path="''${pathsArray["$i"]}"
             source="''${sourcesArray["$i"]}"
@@ -158,7 +158,6 @@ lib.makeOverridable (
             fi
           done
           ${lib.optionalString (allPython3Dependencies python3.pkgs != [ ]) ''
-            # python stuff
             mkdir -p "$out/pack/mnw/start/__python3_dependencies"
             ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
           ''}
