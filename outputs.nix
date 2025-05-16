@@ -36,7 +36,7 @@ self:
       self.lib.uncheckedWrap pkgs (baseSystemAssertWarn evaled.config);
   };
 }
-// builtins.listToAttrs (
+// (builtins.listToAttrs (
   map
     (x: {
       name = "${x}Modules";
@@ -55,4 +55,58 @@ self:
       "homeManager"
       "darwin"
     ]
+))
+// (
+  let
+    lib = import (sources.nixpkgs + /lib);
+    forEachSystems = lib.genAttrs [
+      "x86_64-linux"
+      "x86_64-darwin"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
+    sources = import ./npins;
+  in
+  {
+    packages = forEachSystems (
+      system:
+      let
+        pkgs = import sources.nixpkgs { inherit system; };
+      in
+      pkgs.nixosOptionsDoc {
+        inherit
+          (
+            (lib.evalModules {
+              specialArgs = { inherit pkgs; };
+              modules = [
+                (import ./modules/options.nix true)
+              ];
+            })
+          )
+          options
+          ;
+      }
+      // {
+        docs = pkgs.callPackage ./docs/package.nix {
+          inherit (self.packages.${system}) optionsJSON;
+        };
+      }
+    );
+
+    devShells = forEachSystems (
+      system:
+      let
+        pkgs = import sources.nixpkgs { inherit system; };
+      in
+      {
+        default = pkgs.mkShellNoCC {
+          # use npm run dev
+          packages = [
+            pkgs.nodejs
+          ];
+          env.MNW_OPTIONS_JSON = self.packages.${system}.optionsJSON;
+        };
+      }
+    );
+  }
 )
