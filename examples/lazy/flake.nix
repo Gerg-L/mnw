@@ -30,11 +30,12 @@
             plugins = {
               start = [
                 pkgs.vimPlugins.lz-n
+                pkgs.vimPlugins.plenary-nvim
               ];
 
               # Anything that you're loading lazily should be put here
               opt = [
-                pkgs.vimPlugins.oil-nvim
+                pkgs.vimPlugins.telescope-nvim
               ];
 
               dev.myconfig = {
