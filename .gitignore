@@ -3,4 +3,6 @@
 node_modules
 cache
 dist
-examples/*/flake.lock
+flake.lock
+lazy-lock.json
+
