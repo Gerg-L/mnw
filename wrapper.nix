@@ -90,6 +90,7 @@ lib.makeOverridable (
       in
 
       writeText "init.lua" ''
+        mnwConfigDir = "$out"
         vim.env.PATH =  vim.env.PATH .. ":${lib.makeBinPath ([ providersEnv ] ++ extraBinPath)}"
         package.path = "${luaLib.genLuaPathAbsStr luaEnv};$LUA_PATH" .. package.path
         package.cpath = "${luaLib.genLuaCPathAbsStr luaEnv};$LUA_CPATH" .. package.cpath

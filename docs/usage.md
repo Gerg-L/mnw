@@ -97,7 +97,9 @@ See the examples below:
 
 [Standalone, easy development](https://github.com/Gerg-L/mnw/tree/master/examples/standalone)
 
-[Lazy loading with lz.n](https://github.com/Gerg-L/mnw/tree/master/examples/lazy)
+[Lazy loading with lazy.nvim](https://github.com/Gerg-L/mnw/tree/master/examples/lazy)
+
+[Lazy loading with lz.n](https://github.com/Gerg-L/mnw/tree/master/examples/lz.n)
 
 [My Neovim flake](https://github.com/Gerg-L/nvim-flake)
 
