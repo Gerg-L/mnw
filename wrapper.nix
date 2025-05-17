@@ -147,16 +147,18 @@ lib.makeOverridable (
             -c "helptags ALL" \
             "+quit!"
 
+          shopt -s extglob
           for ((i = 0; i < "''${#pathsArray[@]}"; i++ ))
           do
             path="''${pathsArray["$i"]}"
             source="''${sourcesArray["$i"]}"
             mkdir -p "$out/$path"
-            ln -ns "$source/"*[!'doc'] -t "$out/$path"
+            ln -ns "$source/"!(doc) -t "$out/$path"
             if [[ -e "$source/doc" ]] && [[ ! -e "$out/$path/doc" ]]; then
               ln -ns "$source/doc" -t "$out/$path"
             fi
           done
+          shopt -u extglob
           ${lib.optionalString (allPython3Dependencies python3.pkgs != [ ]) ''
             mkdir -p "$out/pack/mnw/start/__python3_dependencies"
             ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
