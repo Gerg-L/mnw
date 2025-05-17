@@ -21,46 +21,25 @@
           default = mnw.lib.wrap pkgs {
             neovim = pkgs.neovim-unwrapped;
 
-            # all files in the `lua/plugin` folder are now autoloaded, so no need
-            # for an init.lua in there
-            initLua = ''
-              require('myconfig')
-              require("lazy").setup({
-                root = mnwConfigDir .. "/pack/mnw/opt",
-                performance = {
-                  reset_packpath = false,
-                  rtp = {
-                      reset = false,
-                    }
-                  },
-                install = {
-                  missing = false,
-                },
-                spec = {
-                  { import = "plugins", },
-                },
-                checker = {
-                  enabled = false,
-                },
-              })
-            '';
+            luaFiles = [ ./init.lua ];
+
             plugins = {
               start = [
                 pkgs.vimPlugins.lazy-nvim
                 pkgs.vimPlugins.plenary-nvim
               ];
 
-              # Anything that you're loading lazily should be put here
+              # Anything that you're lazy loading should be put here
               opt = [
                 pkgs.vimPlugins.telescope-nvim
               ];
 
               dev.myconfig = {
-                pure = ./nvim;
+                pure = ./.;
                 impure =
                   # This is a hack it should be a absolute path
                   # here it'll only work from this directory
-                  "/' .. vim.uv.cwd()  .. '/nvim";
+                  "/' .. vim.uv.cwd()";
               };
             };
           };

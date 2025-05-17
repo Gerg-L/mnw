@@ -1,5 +1,5 @@
 return {
-  "telescope.nvim",
+  "nvim-telescope/telescope.nvim",
   cmd = "Telescope",
   event = "VeryLazy",
   opts = {},
