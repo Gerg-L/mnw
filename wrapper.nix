@@ -34,9 +34,16 @@ lib.makeOverridable (
       builtins.mapAttrs (_: v: builtins.getAttr (if dev then "impure" else "pure") v) plugins.dev
     );
 
+    getName =
+      x:
+      if x.passthru.vimPlugin or false then
+        lib.removePrefix "vimplugin-" (lib.getName x)
+      else
+        lib.getName x;
+
     # ensure there's only one plugin with each name
     # ideally this would be fixed in the module system
-    foldPlugins = p: builtins.attrValues (lib.foldl (a: b: a // { "${lib.getName b}" = b; }) { } p);
+    foldPlugins = p: builtins.attrValues (lib.foldl (a: b: a // { "${getName b}" = b; }) { } p);
 
     optPlugins = foldPlugins plugins.opt;
 
@@ -44,8 +51,6 @@ lib.makeOverridable (
       let
         /*
           Stolen from viperML
-
-          Can't call lib.unique here because of module system errors
           about the same speed as using concatMap but removes a let in
         */
         findDeps = builtins.foldl' (
@@ -106,7 +111,8 @@ lib.makeOverridable (
       sourcesArray = startPlugins ++ optPlugins;
       pathsArray =
         let
-          fn = name: list: map (x: "pack/mnw/${name}/" + lib.getName x) list;
+          fn = name: list: map (x: "pack/mnw/${name}/" + getName x) list;
+
         in
         (fn "start" startPlugins) ++ (fn "opt" optPlugins);
 
