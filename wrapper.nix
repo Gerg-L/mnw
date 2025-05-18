@@ -43,7 +43,23 @@ lib.makeOverridable (
 
     # ensure there's only one plugin with each name
     # ideally this would be fixed in the module system
-    foldPlugins = p: builtins.attrValues (lib.foldl (a: b: a // { "${getName b}" = b; }) { } p);
+    foldPlugins =
+      p:
+      builtins.attrValues (
+        builtins.foldl' (
+          a: b:
+          let
+            expr = {
+              "${getName b}" = b;
+            };
+          in
+          # Don't override explicit plugins with dependencies
+          if b.dep or false then
+            expr // a
+          else
+            a // expr
+        ) { } p
+      );
 
     optPlugins = foldPlugins plugins.opt;
 
@@ -53,26 +69,25 @@ lib.makeOverridable (
           Stolen from viperML
           about the same speed as using concatMap but removes a let in
         */
-        findDeps = builtins.foldl' (
+        findDeps = dep: builtins.foldl' (
           x: y:
           builtins.concatLists [
             x
             [
-              y
+              (y // { inherit dep; })
             ]
-            (findDeps y.dependencies)
+            (findDeps true y.dependencies)
           ]
         ) [ ];
       in
       /*
-        Gross edge case of optional plugin's
-        dependency being loaded non-optionally
+        optional plugin's dependencies are loaded non-optionally
         only nixpkgs plugins have dependencies though
         so it should be okay
       */
       foldPlugins (
         lib.optionals (!dev) devPlugins
-        ++ (lib.subtractLists optPlugins ((findDeps plugins.start) ++ (findDeps optPlugins)))
+        ++ (lib.subtractLists optPlugins ((findDeps false plugins.start) ++ (findDeps false optPlugins)))
       );
 
     allPython3Dependencies =
