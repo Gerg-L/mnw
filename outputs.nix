@@ -1,6 +1,7 @@
 self:
 {
   lib = {
+    npinsToPlugins = pkgs: pkgs.callPackage ./npinsToPlugins.nix { };
     uncheckedWrap = pkgs: pkgs.callPackage ./wrapper.nix { };
     wrap =
       args:
