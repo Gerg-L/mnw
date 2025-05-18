@@ -24,6 +24,7 @@ lib.makeOverridable (
     providers,
     dev ? false,
     plugins,
+    extraBuilderArgs,
     ...
   }@mnwWrapperArgs:
   let
@@ -54,10 +55,7 @@ lib.makeOverridable (
             };
           in
           # Don't override explicit plugins with dependencies
-          if b.dep or false then
-            expr // a
-          else
-            a // expr
+          if b.dep or false then expr // a else a // expr
         ) { } p
       );
 
@@ -69,16 +67,18 @@ lib.makeOverridable (
           Stolen from viperML
           about the same speed as using concatMap but removes a let in
         */
-        findDeps = dep: builtins.foldl' (
-          x: y:
-          builtins.concatLists [
-            x
-            [
-              (y // { inherit dep; })
+        findDeps =
+          dep:
+          builtins.foldl' (
+            x: y:
+            builtins.concatLists [
+              x
+              [
+                (y // { inherit dep; })
+              ]
+              (findDeps true y.dependencies)
             ]
-            (findDeps true y.dependencies)
-          ]
-        ) [ ];
+          ) [ ];
       in
       /*
         optional plugin's dependencies are loaded non-optionally
@@ -270,56 +270,61 @@ lib.makeOverridable (
 
   in
 
-  stdenvNoCC.mkDerivation {
-    pname = "mnw";
-    version = lib.getVersion neovim;
+  stdenvNoCC.mkDerivation (
+    {
+      # overrideable arguments
+      pname = "mnw";
+      version = lib.getVersion neovim;
 
-    nativeBuildInputs = [
-      makeShellWrapper
-      lndir
-    ];
+      dontUnpack = true;
+      strictDeps = true;
 
-    dontUnpack = true;
-    strictDeps = true;
+      # Massively reduces build times
+      dontFixup = true;
+    }
+    // extraBuilderArgs
+    // {
 
-    # Massively reduces build times
-    dontFixup = true;
+      # non-overrideable or concatenated arguments
+      nativeBuildInputs = extraBuilderArgs.nativeBuildInputs or [ ] ++ [
+        makeShellWrapper
+        lndir
+      ];
 
-    installPhase = ''
-      runHook preInstall
+      installPhase = ''
+        runHook preInstall
 
-      # symlinkJoin
-      mkdir -p "$out"
-      lndir -silent '${neovim}' "$out"
+        # symlinkJoin
+        mkdir -p "$out"
+        lndir -silent '${neovim}' "$out"
 
-      wrapProgram $out/bin/nvim ${wrapperArgsStr}
+        wrapProgramShell "$out/bin/nvim" ${wrapperArgsStr}
 
-      ${lib.concatMapStringsSep "\n" (x: "ln -s $out/bin/nvim $out/bin/'${x}'") aliases}
+        ${lib.concatMapStringsSep "\n" (x: ''ln -s "$out/bin/nvim" "$out/bin/"'${x}' '') aliases}
 
-      ${lib.optionalString (!desktopEntry) "rm -rf $out/share/applications"}
+        ${lib.optionalString (!desktopEntry) ''rm -rf "$out/share/applications"''}
 
-      runHook postInstall
-    '';
+        runHook postInstall
+      '';
 
-    # For debugging
-    passthru =
-      {
-        inherit builtConfigDir;
-        config = mnwWrapperArgs;
-      }
-      // lib.optionalAttrs (!dev) {
-        devMode = (callPackage ./wrapper.nix callPackageArgs) (mnwWrapperArgs // { dev = true; });
-      };
+      # For debugging
+      passthru =
+        {
+          inherit builtConfigDir;
+          config = mnwWrapperArgs;
+        }
+        // lib.optionalAttrs (!dev) {
+          devMode = (callPackage ./wrapper.nix callPackageArgs) (mnwWrapperArgs // { dev = true; });
+        }
+        // extraBuilderArgs.passthru or { };
 
-    # From nixpkgs
-    meta = {
-      inherit (neovim.meta)
-        mainProgram
-        license
-        platforms
-        ;
-      # prefer wrapper over the package
-      priority = (neovim.meta.priority or 0) - 2;
-    };
-  }
+      meta = {
+        inherit (neovim.meta)
+          mainProgram
+          ;
+        # prefer wrapper over the package
+        priority = (neovim.meta.priority or 0) - 2;
+      } // extraBuilderArgs.meta or { };
+    }
+  )
 )

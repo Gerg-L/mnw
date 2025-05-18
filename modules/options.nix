@@ -520,5 +520,21 @@ in
         };
       };
     };
+    extraBuilderArgs = lib.mkOption {
+      type = types.attrsOf types.anything;
+      default = { };
+      description = ''
+        Extra attributes to pass to mkDerivation.
+      '';
+      example = lib.literalExpression ''
+        {
+          doInstallCheck = true;
+          extraInstallCheckInputs = [ pkgs.hello ];
+          installCheckPhase = '''
+            hello
+          ''';
+        }
+      '';
+    };
   };
 }
