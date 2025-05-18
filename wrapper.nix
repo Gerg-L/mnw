@@ -24,6 +24,9 @@ lib.makeOverridable (
     providers,
     dev ? false,
     plugins,
+    nativeInstallCheckInputs,
+    installCheckPhase,
+    doInstallCheck,
     ...
   }@mnwWrapperArgs:
   let
@@ -54,10 +57,7 @@ lib.makeOverridable (
             };
           in
           # Don't override explicit plugins with dependencies
-          if b.dep or false then
-            expr // a
-          else
-            a // expr
+          if b.dep or false then expr // a else a // expr
         ) { } p
       );
 
@@ -69,16 +69,18 @@ lib.makeOverridable (
           Stolen from viperML
           about the same speed as using concatMap but removes a let in
         */
-        findDeps = dep: builtins.foldl' (
-          x: y:
-          builtins.concatLists [
-            x
-            [
-              (y // { inherit dep; })
+        findDeps =
+          dep:
+          builtins.foldl' (
+            x: y:
+            builtins.concatLists [
+              x
+              [
+                (y // { inherit dep; })
+              ]
+              (findDeps true y.dependencies)
             ]
-            (findDeps true y.dependencies)
-          ]
-        ) [ ];
+          ) [ ];
       in
       /*
         optional plugin's dependencies are loaded non-optionally
@@ -299,6 +301,13 @@ lib.makeOverridable (
       ${lib.optionalString (!desktopEntry) "rm -rf $out/share/applications"}
 
       runHook postInstall
+    '';
+
+    inherit doInstallCheck nativeInstallCheckInputs;
+    installCheckPhase = ''
+      runHook preInstallCheck
+      ${installCheckPhase}
+      runHook postInstallCheck
     '';
 
     # For debugging

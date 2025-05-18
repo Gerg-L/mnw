@@ -520,5 +520,23 @@ in
         };
       };
     };
+    doInstallCheck = lib.mkEnableOption "running the installCheckPhase of the mnw builder";
+    nativeInstallCheckInputs = lib.mkOption {
+      type = types.listOf types.package;
+      default = [ ];
+      description = ''
+        Packages to include in $PATH for `installCheckPhase`.
+      '';
+      example = lib.literalExpression "[ hello ]";
+    };
+    installCheckPhase = lib.mkOption {
+      type = types.lines;
+      default = "";
+      description = ''
+        installCheckPhase to run.
+      '';
+      example = "hello";
+    };
+
   };
 }
