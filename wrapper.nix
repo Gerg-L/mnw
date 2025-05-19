@@ -215,12 +215,12 @@ lib.makeOverridable (
 
         postBuild = ''
           ${lib.optionalString providers.python3.enable ''
-            makeWrapper ${lib.getExe pythonEnv} $out/bin/neovim-python3-host \
+            makeWrapper '${lib.getExe pythonEnv}' "$out/bin/neovim-python3-host" \
                 --unset PYTHONPATH \
                 --unset PYTHONSAFEPATH
           ''}
 
-          ${lib.optionalString providers.perl.enable "ln -s ${lib.getExe perlEnv} $out/bin/neovim-perl-host"}
+          ${lib.optionalString providers.perl.enable ''ln -s '${lib.getExe perlEnv}' "$out/bin/neovim-perl-host"''}
         '';
       };
 
