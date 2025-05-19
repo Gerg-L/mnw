@@ -157,7 +157,7 @@ lib.makeOverridable (
           do
             path="''${pathsArray["$i"]}"
             source="''${sourcesArray["$i"]}"
-            if [[ -e "$source/doc" ]] && [[ ! -e "$source/doc/tags" ]]; then
+            if [[ -e "$source/doc" && ! -e "$source/doc/tags" ]]; then
               mkdir -p "$out/$path/doc"
               ln -ns "$source/doc"* -t "$out/$path/doc"
             fi
@@ -169,18 +169,38 @@ lib.makeOverridable (
             -c "helptags ALL" \
             "+quit!"
 
+          mkdir -p "$out/parser"
+
           shopt -s extglob
           for ((i = 0; i < "''${#pathsArray[@]}"; i++ ))
           do
             path="''${pathsArray["$i"]}"
             source="''${sourcesArray["$i"]}"
+
             mkdir -p "$out/$path"
-            ln -ns "$source/"!(doc) -t "$out/$path"
-            if [[ -e "$source/doc" ]] && [[ ! -e "$out/$path/doc" ]]; then
+
+            tolink=("$source/"!(doc|parser))
+            if (( ''${#tolink} )); then
+              ln -ns "''${tolink[@]}"  -t "$out/$path"
+            fi
+
+            if [[ -e "$source/parser" && -n "$(ls -A "$source/parser")" ]]; then
+              ln -nsf "$source/parser/"* -t "$out/parser"
+            fi
+
+            if [[ -e "$source/doc" && ! -e "$out/$path/doc" ]]; then
               ln -ns "$source/doc" -t "$out/$path"
             fi
           done
           shopt -u extglob
+
+          for path in "$out/pack/mnw/"*/*
+          do
+            if [[ -d "$path" && -z "$(ls -A $path)" ]]; then
+              rmdir $path
+            fi
+          done
+
           ${lib.optionalString (allPython3Dependencies python3.pkgs != [ ]) ''
             mkdir -p "$out/pack/mnw/start/__python3_dependencies"
             ln -s '${python3.withPackages allPython3Dependencies}/${python3.sitePackages}' "$out/pack/mnw/start/__python3_dependencies/python3"
