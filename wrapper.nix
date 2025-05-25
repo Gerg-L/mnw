@@ -119,8 +119,8 @@ lib.makeOverridable (
           ${sourceVimL}
         '';
 
-    builtConfigDir = stdenvNoCC.mkDerivation {
-      name = "builtConfigDir";
+    configDir = stdenvNoCC.mkDerivation {
+      name = "mnw-configDir";
       nativeBuildInputs = [ envsubst ];
       __structuredAttrs = true;
 
@@ -252,8 +252,8 @@ lib.makeOverridable (
           "--cmd \"lua "
           + lib.concatStringsSep ";" (
             [
-              "vim.opt.packpath:prepend('${builtConfigDir}')"
-              "vim.opt.runtimepath:prepend('${builtConfigDir}')"
+              "vim.opt.packpath:prepend('${configDir}')"
+              "vim.opt.runtimepath:prepend('${configDir}')"
             ]
             ++ (lib.optionals (dev && devPlugins != [ ]) [
               "vim.opt.runtimepath:prepend('${lib.concatStringsSep "," devPlugins}')"
@@ -284,7 +284,7 @@ lib.makeOverridable (
 
         "--set"
         "VIMINIT"
-        "source ${builtConfigDir}/init.lua"
+        "source ${configDir}/init.lua"
       ]
       ++ wrapperArgs
     );
@@ -331,7 +331,7 @@ lib.makeOverridable (
       # For debugging
       passthru =
         {
-          inherit builtConfigDir;
+          inherit configDir;
           config = mnwWrapperArgs;
         }
         // lib.optionalAttrs (!dev) {
