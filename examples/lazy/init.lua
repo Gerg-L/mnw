@@ -2,11 +2,11 @@
 vim.keymap.set("n", " ", "<Nop>", { silent = true, remap = false })
 vim.g.mapleader = " "
 
--- mnwConfigDir is a global set by mnw
+-- mnw is a global set by mnw
 -- so if it's set this config is being ran from nix
-if mnwConfigDir ~= nil then
+if mnw ~= nil then
   require("lazy").setup({
-    root = mnwConfigDir .. "/pack/mnw/opt",
+    root = mnw.configDir .. "/pack/mnw/opt",
 
     -- keep rtp/packpath the same
     performance = {
