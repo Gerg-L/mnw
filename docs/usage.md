@@ -105,6 +105,10 @@ See the examples below:
 
 [nvf](https://github.com/NotAShelf/nvf)
 
-[viperML](https://github.com/viperML/dotfiles/blob/master/packages/neovim/module.nix)
+[viperML](https://github.com/viperML/dotfiles/blob/master/packages/neovim)
+
+[llakala](https://github.com/llakala/meovim)
+
+[adamcstephens](https://codeberg.org/adamcstephens/dotfiles/src/branch/main/apps/neovim)
 
 Make a PR to add your config :D
