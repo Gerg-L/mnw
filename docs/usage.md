@@ -91,6 +91,16 @@ Then you can use the `.devMode` attribute of the created neovim package!
 
 See the examples below:
 
+### Lua variables
+
+Currently mnw only has one lua global variable set
+
+`mnw` which is a table which contains `configDir`
+
+Which is the path to the generated config directory of mnw
+
+You can build/view this directory by building the `.configDir` of the mnw package
+
 ### Examples
 
 [Simple NixOS example](https://github.com/Gerg-L/mnw/tree/master/examples/nixos)
