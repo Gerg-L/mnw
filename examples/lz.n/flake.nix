@@ -39,7 +39,14 @@
               ];
 
               dev.myconfig = {
-                pure = ./nvim;
+                pure =
+                  let
+                    fs = nixpkgs.lib.fileset;
+                  in
+                  fs.toSource {
+                    root = ./.;
+                    fileset = fs.unions [ ./lua ];
+                  };
                 impure =
                   # This is a hack it should be a absolute path
                   # here it'll only work from this directory

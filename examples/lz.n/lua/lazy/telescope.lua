@@ -2,8 +2,6 @@ return {
   "telescope.nvim",
   cmd = "Telescope",
 
-  event = "DeferredUIEnter",
-
   after = function()
     require("telescope").setup()
   end,
