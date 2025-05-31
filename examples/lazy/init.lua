@@ -23,13 +23,8 @@ if mnw ~= nil then
     },
 
     install = {
-      -- Don't install missing plugins
-      -- missing = false,
-    },
-
-    checker = {
-      -- version checks
-      enabled = false,
+      -- install missing plugins
+      missing = true,
     },
 
     spec = {
