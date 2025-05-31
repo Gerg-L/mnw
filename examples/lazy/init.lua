@@ -6,7 +6,13 @@ vim.g.mapleader = " "
 -- so if it's set this config is being ran from nix
 if mnw ~= nil then
   require("lazy").setup({
-    root = mnw.configDir .. "/pack/mnw/opt",
+    dev = {
+      path = mnw.configDir .. "/pack/mnw/opt",
+      -- match all plugins
+      patterns = { "" },
+      -- install missing
+      fallback = true,
+    },
 
     -- keep rtp/packpath the same
     performance = {
@@ -17,8 +23,8 @@ if mnw ~= nil then
     },
 
     install = {
-      -- allow missing plugins
-      missing = false,
+      -- Don't install missing plugins
+      -- missing = false,
     },
 
     checker = {
@@ -31,7 +37,7 @@ if mnw ~= nil then
     },
   })
 else
--- otherwise we have to bootstrap lazy ourself
+  -- otherwise we have to bootstrap lazy ourself
   local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
   if not (vim.uv or vim.loop).fs_stat(lazypath) then
     local lazyrepo = "https://github.com/folke/lazy.nvim.git"
