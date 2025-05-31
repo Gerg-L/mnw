@@ -39,14 +39,10 @@
               ];
 
               dev.myconfig = {
-                pure =
-                  let
-                    fs = nixpkgs.lib.fileset;
-                  in
-                  fs.toSource {
-                    root = ./.;
-                    fileset = fs.unions [ ./lua ];
-                  };
+
+                # you can use lib.fileset to reduce rebuilds here
+                # https://noogle.dev/f/lib/fileset/toSource
+                pure = ./.;
                 impure =
                   # This is a hack it should be a absolute path
                   # here it'll only work from this directory

@@ -5,12 +5,14 @@ vim.g.mapleader = " "
 -- mnw is a global set by mnw
 -- so if it's set this config is being ran from nix
 if mnw ~= nil then
+  -- Thank you https://nixalted.com/lazynvim-nixos.html
   require("lazy").setup({
     dev = {
       path = mnw.configDir .. "/pack/mnw/opt",
       -- match all plugins
       patterns = { "" },
-      -- install missing
+      -- fallback to downloading plugins from git
+      -- disable this to force only using nix plugins
       fallback = true,
     },
 

@@ -35,6 +35,8 @@
               ];
 
               dev.myconfig = {
+                # you can use lib.fileset to reduce rebuilds here
+                # https://noogle.dev/f/lib/fileset/toSource
                 pure = ./.;
                 impure =
                   # This is a hack it should be a absolute path
