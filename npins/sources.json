@@ -3,8 +3,8 @@
     "nixpkgs": {
       "type": "Channel",
       "name": "nixpkgs-unstable",
-      "url": "https://releases.nixos.org/nixpkgs/nixpkgs-25.05pre800239.b1bebd0fe266/nixexprs.tar.xz",
-      "hash": "0vnfj9d7kzk673i7s1vnkbx513a4gh5mfcd8fag2c7wi6hz471n6"
+      "url": "https://releases.nixos.org/nixpkgs/nixpkgs-25.11pre844992.32f313e49e42/nixexprs.tar.xz",
+      "hash": "04wxwmhvc8y3gdkgzgh4zlwbv6jh21v3qdsmzbfy73q6ywqvb34s"
     }
   },
   "version": 5
