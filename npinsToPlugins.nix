@@ -106,6 +106,7 @@ lib.mapAttrsToList
       name = "${name}-${version}";
       pname = name;
       inherit version;
+      vimPlugin = true;
       outPath = (mayOverride (func spec)).overrideAttrs {
         pname = name;
         name = "${name}-${version}";
