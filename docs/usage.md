@@ -121,4 +121,6 @@ You can build/view this directory by building the `.configDir` of the mnw packag
 
 [adamcstephens](https://codeberg.org/adamcstephens/dotfiles/src/branch/main/apps/neovim)
 
+[HeitorAugustoLN](https://github.com/HeitorAugustoLN/nvim-config)
+
 Make a PR to add your config :D
