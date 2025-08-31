@@ -87,7 +87,9 @@ lib.makeOverridable (
       */
       foldPlugins (
         lib.optionals (!dev) devPlugins
-        ++ (lib.subtractLists optPlugins ((findDeps false plugins.start) ++ (findDeps false optPlugins)))
+        ++ (lib.subtractLists (map (x: x // { dep = false; }) optPlugins) (
+          (findDeps false plugins.start) ++ (findDeps false optPlugins)
+        ))
       );
 
     allPython3Dependencies =
@@ -329,15 +331,14 @@ lib.makeOverridable (
       '';
 
       # For debugging
-      passthru =
-        {
-          inherit configDir;
-          config = mnwWrapperArgs;
-        }
-        // lib.optionalAttrs (!dev) {
-          devMode = (callPackage ./wrapper.nix callPackageArgs) (mnwWrapperArgs // { dev = true; });
-        }
-        // extraBuilderArgs.passthru or { };
+      passthru = {
+        inherit configDir;
+        config = mnwWrapperArgs;
+      }
+      // lib.optionalAttrs (!dev) {
+        devMode = (callPackage ./wrapper.nix callPackageArgs) (mnwWrapperArgs // { dev = true; });
+      }
+      // extraBuilderArgs.passthru or { };
 
       meta = {
         inherit (neovim.meta)
@@ -345,7 +346,8 @@ lib.makeOverridable (
           ;
         # prefer wrapper over the package
         priority = (neovim.meta.priority or 0) - 2;
-      } // extraBuilderArgs.meta or { };
+      }
+      // extraBuilderArgs.meta or { };
     }
   )
 )
