@@ -187,7 +187,7 @@ lib.makeOverridable (
               ln -ns "''${tolink[@]}"  -t "$out/$path"
             fi
 
-            if [[ -e "$source/parser" && -n "$(ls -A "$source/parser")" ]]; then
+            if [[ -e "$source/parser" && -n "$(ls "$source/parser")" ]]; then
               ln -nsf "$source/parser/"* -t "$out/parser"
             fi
 
