@@ -186,9 +186,7 @@ lib.makeOverridable (
             fi
 
             if [[ -e "$source/parser" && -n "$(ls -A "$source/parser")" ]]; then
-              for f in "$sources/parser/"* ; do 
-                ln -nsf "$f" -t "$out/parser"
-              done
+              ln -nsf "$source/parser/"* -t "$out/parser"
             fi
 
             if [[ -e "$source/doc" && ! -e "$out/$path/doc" ]]; then
