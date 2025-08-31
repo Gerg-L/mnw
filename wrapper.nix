@@ -35,12 +35,7 @@ lib.makeOverridable (
       builtins.mapAttrs (_: v: builtins.getAttr (if dev then "impure" else "pure") v) plugins.dev
     );
 
-    getName =
-      x:
-      if x.passthru.vimPlugin or false then
-        lib.removePrefix "vimplugin-" (lib.getName x)
-      else
-        lib.getName x;
+    getName = x: lib.removePrefix "vimplugin-" (lib.getName x);
 
     # ensure there's only one plugin with each name
     # ideally this would be fixed in the module system
