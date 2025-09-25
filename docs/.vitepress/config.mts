@@ -16,6 +16,7 @@ export default defineConfig({
           { text: 'Home', link: '/index' },
           { text: 'Usage', link: '/usage' },
           { text: 'Options', link: '/options' },
+          { text: 'Examples', link: '/examples' },
         ],
       },
     ],
