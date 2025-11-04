@@ -22,7 +22,7 @@ self:
             modulesPath = toString ./modules;
           };
           modules = [
-            (import ./modules/options.nix false)
+            ./modules/options.nix
             module
           ];
         };
@@ -80,7 +80,7 @@ self:
             (lib.evalModules {
               specialArgs = { inherit pkgs; };
               modules = [
-                (import ./modules/options.nix true)
+                ./modules/options.nix
               ];
             })
           )
