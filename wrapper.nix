@@ -29,68 +29,31 @@ lib.makeOverridable (
   }@mnwWrapperArgs:
   let
 
-    python3 = providers.python3.package;
-
-    devPlugins = builtins.attrValues (
-      builtins.mapAttrs (_: v: builtins.getAttr (if dev then "impure" else "pure") v) plugins.dev
+    pluginsToListOfStrings = lib.mapAttrsToList (
+      n: v:
+      if lib.isStringLike v then
+        "${v}"
+      else if v ? src && lib.isStringLike v.src then
+        "${v.src}"
+      else
+        throw "mnw: plugin '${n}' cannot be coerced to string, ensure it has a 'outPath' or 'src'"
     );
 
-    getName = x: lib.removePrefix "vimplugin-" (lib.getName x);
+    python3 = providers.python3.package;
 
-    # ensure there's only one plugin with each name
-    # ideally this would be fixed in the module system
-    foldPlugins =
-      p:
-      builtins.attrValues (
-        builtins.foldl' (
-          a: b:
-          let
-            expr = {
-              "${getName b}" = b;
-            };
-          in
-          # Don't override explicit plugins with dependencies
-          if b.dep or false then expr // a else a // expr
-        ) { } p
-      );
+    devPlugins = builtins.mapAttrs (_: v: v.${if dev then "impure" else "pure"}) plugins.dev;
 
-    optPlugins = foldPlugins plugins.opt;
+    optPlugins = lib.filterAttrs (_: v: v != null) plugins.optAttrs;
 
-    startPlugins =
-      let
-        /*
-          Stolen from viperML
-          about the same speed as using concatMap but removes a let in
-        */
-        findDeps =
-          dep:
-          builtins.foldl' (
-            x: y:
-            builtins.concatLists [
-              x
-              [
-                (y // { inherit dep; })
-              ]
-              (findDeps true y.dependencies)
-            ]
-          ) [ ];
-      in
-      /*
-        optional plugin's dependencies are loaded non-optionally
-        only nixpkgs plugins have dependencies though
-        so it should be okay
-      */
-      foldPlugins (
-        lib.optionals (!dev) devPlugins
-        ++ (lib.subtractLists (map (x: x // { dep = false; }) optPlugins) (
-          (findDeps false plugins.start) ++ (findDeps false optPlugins)
-        ))
-      );
+    startPlugins = lib.filterAttrs (_: v: v != null) (
+      plugins.startAttrs // (lib.optionalAttrs (!dev) devPlugins)
+    );
 
     allPython3Dependencies =
       ps:
       lib.pipe startPlugins [
-        (lib.concatMap (plugin: plugin.python3Dependencies ps))
+        builtins.attrValues
+        (lib.concatMap (plugin: plugin.python3Dependencies or (_: [ ]) ps))
         lib.unique
       ];
     generatedInitLua =
@@ -121,11 +84,10 @@ lib.makeOverridable (
       nativeBuildInputs = [ envsubst ];
       __structuredAttrs = true;
 
-      sourcesArray = startPlugins ++ optPlugins;
+      sourcesArray = (pluginsToListOfStrings startPlugins) ++ (pluginsToListOfStrings optPlugins);
       pathsArray =
         let
-          fn = name: list: map (x: "pack/mnw/${name}/" + getName x) list;
-
+          fn = name: lib.mapAttrsToList (n: _: "pack/mnw/${name}/" + n);
         in
         (fn "start" startPlugins) ++ (fn "opt" optPlugins);
 
@@ -252,9 +214,11 @@ lib.makeOverridable (
               "vim.opt.packpath:prepend('${configDir}')"
               "vim.opt.runtimepath:prepend('${configDir}')"
             ]
-            ++ (lib.optionals (dev && devPlugins != [ ]) [
-              "vim.opt.runtimepath:prepend('${lib.concatStringsSep "," devPlugins}')"
-              "vim.opt.runtimepath:append('${lib.concatMapStringsSep "," (p: "${p}/after") devPlugins}')"
+            ++ (lib.optionals (dev && devPlugins != { }) [
+              "vim.opt.runtimepath:prepend('${lib.concatStringsSep "," (pluginsToListOfStrings devPlugins)}')"
+              "vim.opt.runtimepath:append('${
+                lib.concatMapStringsSep "," (p: "${p}/after") (pluginsToListOfStrings devPlugins)
+              }')"
             ])
             ++ (lib.mapAttrsToList
               (

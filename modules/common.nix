@@ -12,8 +12,7 @@
         modulesPath = toString ./.;
       };
       modules = [
-
-        (import ./options.nix false)
+        ./options.nix
       ];
     };
   };
