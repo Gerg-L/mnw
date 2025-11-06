@@ -27,8 +27,8 @@ Plugins are a package, a relative path, or an attribute set with a `name`/`pname
 `start` and `startAttrs` are added to `/start` and are `require()`-able
 while `opt` and `optAttrs` are added to `/opt` and must be `packadd`'d or loaded by `lz.n/lazy.nvim` before being `require()`'d
 
-Everything in `opt/start` have their `.dependencies` resolved (for nixpkgs compatibility)
-and those dependencies are added to `startAttrs` while `*Attrs` do not resolve `.dependencies`
+Everything in `opt/start` have their `.dependencies` added to `startAttrs` as well (for nixpkgs compatibility)
+plugins added directly to `*Attrs` do not resolve `.dependencies`
 
 The assignment to `*Attrs` is done by resolving the `pname` or `name` of the package.
 so `{ pname = "foo"; ...` would be put at `*Attrs.foo`
@@ -101,7 +101,7 @@ Any plugin in `opt` will override the plugin of the same name in `start` when pr
       oil-nvim = pkgs.vimPlugins.oil-nvim;
 
       # Stop a dependency from a nixpkgs plugin from being installed
-      dependency = null;
+      someDependency = null;
 
       # Path plugin
       foo = ./bar;
@@ -118,7 +118,7 @@ Any plugin in `opt` will override the plugin of the same name in `start` when pr
       # nixpkgs plugin
       fzf-lua = pkgs.vimPlugins.fzf-lua;
 
-      # Disable a opt plugin
+      # Disable a optional plugin
       disableMe = null;
 
       # Path plugin
