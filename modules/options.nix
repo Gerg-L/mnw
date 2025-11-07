@@ -283,31 +283,13 @@ in
           description = "";
           type = types.attrsOf (lib.types.nullOr pluginType);
           default = { };
-          apply = builtins.mapAttrs (
-            n: v:
-            if builtins.isPath v then
-              {
-                pname = n;
-                outPath = "${v}";
-              }
-            else
-              v
-          );
         };
+
         listOpt = lib.mkOption {
           description = "";
           type = types.listOf pluginType;
           default = [ ];
-          apply = map (
-            x:
-            if builtins.isPath x then
-              {
-                pname = "${baseNameOf x}-${builtins.substring 0 7 (builtins.hashString "md5" "${x}")}";
-                outPath = "${x}";
-              }
-            else
-              x
-          );
+
         };
       in
       {
@@ -318,48 +300,36 @@ in
 
         dev = lib.mkOption {
           type = types.attrsOf (
-            types.submodule (
-              { name, ... }:
-              {
-                options = {
-                  impure = lib.mkOption {
-                    type = types.path // {
-                      check =
-                        # a trimmed down version of
-                        # https://github.com/NixOS/nixpkgs/blob/16762245d811fdd74b417cc922223dc8eb741e8b/lib/types.nix#L696
-                        x:
-                        let
-                          # nixpkgs hashPrefix has a path check which will spit a warning
-                          hasPrefix = pref: (builtins.substring 0 (builtins.stringLength pref) (toString x)) == pref;
-                        in
-                        hasPrefix "/" || hasPrefix "~/";
-                    };
-                    description = ''
-                      The impure absolute paths to the nvim plugin.
-                    '';
-                    example = "/home/user/nix-config/nvim";
-                  };
-                  pure = lib.mkOption {
-                    type = pluginType;
-
-                    visible = "shallow";
-                    apply =
+            types.submodule {
+              options = {
+                impure = lib.mkOption {
+                  type = types.path // {
+                    check =
+                      # a trimmed down version of
+                      # https://github.com/NixOS/nixpkgs/blob/16762245d811fdd74b417cc922223dc8eb741e8b/lib/types.nix#L696
                       x:
-                      if builtins.isPath x then
-                        {
-                          pname = name;
-                          outPath = "${x}";
-                        }
-                      else
-                        x;
-                    description = ''
-                      The pure path to the nvim plugin.
-                    '';
-                    example = lib.literalExpression "./nvim";
+                      let
+                        # nixpkgs hashPrefix has a path check which will spit a warning
+                        hasPrefix = pref: (builtins.substring 0 (builtins.stringLength pref) (toString x)) == pref;
+                      in
+                      hasPrefix "/" || hasPrefix "~/";
                   };
+                  description = ''
+                    The impure absolute paths to the nvim plugin.
+                  '';
+                  example = "/home/user/nix-config/nvim";
                 };
-              }
-            )
+                pure = lib.mkOption {
+                  type = pluginType;
+
+                  visible = "shallow";
+                  description = ''
+                    The pure path to the nvim plugin.
+                  '';
+                  example = lib.literalExpression "./nvim";
+                };
+              };
+            }
           );
           default = { };
           description = ''
@@ -380,30 +350,43 @@ in
   };
   config =
     let
-      pluginListToAttrs = builtins.foldl' (
-        a: b:
+      transformPlugins =
+        basePrio:
         let
-          expr = {
-            "${lib.removePrefix "vimplugin-" (lib.getName b)}" = lib.mkDefault b;
-          };
+          recurse =
+            isDep:
+            builtins.foldl'
+              (
+                acc: elem:
+                let
+                  item = {
+                    ${
+                      lib.removePrefix "vimplugin-" (
+                        if builtins.isPath elem then
+                          "${baseNameOf elem}-${builtins.substring 0 7 (builtins.hashString "md5" "${elem}")}"
+                        else
+                          lib.getName elem
+                      )
+                    } =
+                      lib.mkOverride (if isDep then basePrio + 1 else basePrio) elem;
+                  };
+                in
+                {
+                  deps =
+                    (if isDep then acc.deps // item else acc.deps)
+                    // lib.optionalAttrs (elem ? dependencies) (recurse true elem.dependencies).deps;
+                  notDeps = if isDep then acc.notDeps else acc.notDeps // item;
+                }
+              )
+              {
+                deps = { };
+                notDeps = { };
+              };
         in
-        # Don't override explicit plugins with dependencies
-        if b.dep or false then expr // a else a // expr
-      ) { };
+        recurse false;
 
-      findDeps =
-        dep:
-        builtins.foldl' (
-          x: y:
-          builtins.concatLists [
-            x
-            [
-              (y // { inherit dep; })
-            ]
-            (findDeps true y.dependencies or [ ])
-          ]
-        ) [ ];
-
+      transformedOpt = transformPlugins 1002 config.plugins.opt;
+      transformedStart = transformPlugins 1000 config.plugins.start;
     in
     {
       plugins = {
@@ -412,12 +395,25 @@ in
           only nixpkgs plugins have dependencies though
           so it should be okay
         */
-        optAttrs = pluginListToAttrs config.plugins.opt;
-        startAttrs = pluginListToAttrs (
-          # start plugins before deps of optional plugins because of foldl' ordering
-          (findDeps false config.plugins.start)
-          ++ (builtins.filter (x: x.dep) (findDeps false config.plugins.opt))
-        );
+        startAttrs = lib.mkMerge [
+          transformedStart.notDeps # 1000
+          transformedStart.deps # 1001
+          transformedOpt.deps # 1003
+        ];
+
+        optAttrs = transformedOpt.notDeps; # 1002
       };
+      warnings = builtins.filter (x: x != null) (
+        lib.mapAttrsToList (
+          n: v:
+          if config.plugins.startAttrs.${n} != null && (v != null) then
+            ''
+              mnw: both 'startAttrs.${n}' and 'optAttrs.${n}' are defined and not null
+              This will cause the plugin to be installed under bot /opt and /start.
+            ''
+          else
+            null
+        ) (builtins.intersectAttrs config.plugins.startAttrs config.plugins.optAttrs)
+      );
     };
 }
