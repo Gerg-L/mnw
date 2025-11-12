@@ -409,7 +409,7 @@ in
           if config.plugins.startAttrs.${n} != null && (v != null) then
             ''
               mnw: both 'startAttrs.${n}' and 'optAttrs.${n}' are defined and not null
-              This will cause the plugin to be installed under bot /opt and /start.
+              This will cause the plugin to be installed under /opt and /start.
             ''
           else
             null
