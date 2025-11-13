@@ -118,7 +118,7 @@ Any plugin in `opt` will override the plugin of the same name in `start` when pr
       # nixpkgs plugin
       fzf-lua = pkgs.vimPlugins.fzf-lua;
 
-      # Disable a optional plugin
+      # Disable an optional plugin
       disableMe = null;
 
       # Path plugin
