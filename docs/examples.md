@@ -1,6 +1,7 @@
 ---
 title: Examples
 ---
+
 # {{ $frontmatter.title }}
 
 ## Official examples
@@ -24,7 +25,5 @@ title: Examples
 [llakala](https://github.com/llakala/meovim)
 
 [adamcstephens](https://codeberg.org/adamcstephens/dotfiles/src/branch/main/apps/neovim)
-
-[HeitorAugustoLN](https://github.com/HeitorAugustoLN/nvim-config)
 
 Make a PR to add your config :D
