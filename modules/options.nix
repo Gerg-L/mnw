@@ -114,7 +114,7 @@ in
     };
 
     wrapperArgs = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
+      type = types.listOf types.str;
       default = [ ];
       description = "A list of arguments to be passed to makeWrapper";
       example = lib.literalExpression ''
@@ -269,19 +269,19 @@ in
     plugins =
       let
         pluginType = types.oneOf [
+          types.pathInStore
           (lib.mkOptionType {
-            name = "path";
-            description = "literal path";
+            name = "attrs with src";
+            description = "attribute set with src";
             descriptionClass = "noun";
-            check = builtins.isPath;
+            check = x: x ? src && types.pathInStore.check x.src;
             merge = lib.mergeEqualOption;
           })
-          (types.package // { check = x: types.package.check x || (x ? src && types.package.check x.src); })
         ];
 
         attrsOpt = lib.mkOption {
           description = "";
-          type = types.attrsOf (lib.types.nullOr pluginType);
+          type = types.attrsOf (types.nullOr pluginType);
           default = { };
         };
 
@@ -362,10 +362,10 @@ in
                   item = {
                     ${
                       lib.removePrefix "vimplugin-" (
-                        if builtins.isPath elem then
-                          "${baseNameOf elem}-${builtins.substring 0 7 (builtins.hashString "md5" "${elem}")}"
-                        else
+                        if builtins.isAttrs elem then
                           lib.getName elem
+                        else
+                          "${baseNameOf elem}-${builtins.substring 0 7 (builtins.hashString "md5" "${elem}")}"
                       )
                     } =
                       lib.mkOverride (if isDep then basePrio + 1 else basePrio) elem;
