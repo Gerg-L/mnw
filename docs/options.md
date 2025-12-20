@@ -84,7 +84,7 @@ Any plugin in `opt` will override the plugin of the same name in `start` when pr
         src = pkgs.fetchFromGitHub {
           owner = "";
           repo = "";
-          ref = "";
+          rev = "";
           hash = "";
         };
 
