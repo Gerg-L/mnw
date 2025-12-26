@@ -351,30 +351,26 @@ in
   config =
     let
       transformPlugins =
-        basePrio:
         let
           recurse =
-            isDep:
+            parent: isDep:
             builtins.foldl'
               (
-                acc: elem:
+                acc: e:
                 let
-                  item = {
-                    ${
-                      lib.removePrefix "vimplugin-" (
-                        if builtins.isAttrs elem then
-                          lib.getName elem
-                        else
-                          "${baseNameOf elem}-${builtins.substring 0 7 (builtins.hashString "md5" "${elem}")}"
-                      )
-                    } =
-                      lib.mkOverride (if isDep then basePrio + 1 else basePrio) elem;
-                  };
+                  name = lib.removePrefix "vimplugin-" (
+                    if builtins.isAttrs e then
+                      lib.getName e
+                    else
+                      "${baseNameOf e}-${builtins.substring 0 7 (builtins.hashString "md5" "${e}")}"
+                  );
+                  item.${name} =
+                    if builtins.isAttrs e then e // (lib.optionalAttrs isDep { __parent = parent; }) else e;
                 in
                 {
                   deps =
                     (if isDep then acc.deps // item else acc.deps)
-                    // lib.optionalAttrs (elem ? dependencies) (recurse true elem.dependencies).deps;
+                    // lib.optionalAttrs (e ? dependencies) (recurse name true e.dependencies).deps;
                   notDeps = if isDep then acc.notDeps else acc.notDeps // item;
                 }
               )
@@ -383,10 +379,12 @@ in
                 notDeps = { };
               };
         in
-        recurse false;
+        recurse "" false;
 
-      transformedOpt = transformPlugins 1002 config.plugins.opt;
-      transformedStart = transformPlugins 1000 config.plugins.start;
+      mkPrio = prio: builtins.mapAttrs (_: v: lib.mkOverride prio v);
+
+      transformedOpt = transformPlugins config.plugins.opt;
+      transformedStart = transformPlugins config.plugins.start;
     in
     {
       plugins = {
@@ -396,20 +394,24 @@ in
           so it should be okay
         */
         startAttrs = lib.mkMerge [
-          transformedStart.notDeps # 1000
-          transformedStart.deps # 1001
-          transformedOpt.deps # 1003
+          (mkPrio 1000 transformedStart.notDeps)
+          (mkPrio 1001 transformedStart.deps)
+          (mkPrio 1002 transformedOpt.deps)
         ];
 
-        optAttrs = transformedOpt.notDeps; # 1002
+        optAttrs = mkPrio 1000 transformedOpt.notDeps;
       };
       warnings = builtins.filter (x: x != null) (
         lib.mapAttrsToList (
-          n: v:
-          if config.plugins.startAttrs.${n} != null && (v != null) then
+          n: opt:
+          let
+            start = config.plugins.startAttrs.${n};
+          in
+          if start != null && (opt != null) then
             ''
-              mnw: both 'startAttrs.${n}' and 'optAttrs.${n}' are defined and not null
+              mnw: both startAttrs."${n}" and optAttrs."${n}" are defined and not null
               This will cause the plugin to be installed under /opt and /start.
+              ${lib.optionalString (start ? __parent) ''startAttrs."${n}" is a dependency of ${start.__parent}''}
             ''
           else
             null
