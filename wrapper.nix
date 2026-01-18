@@ -130,6 +130,7 @@ lib.makeOverridable (
             "+quit!"
 
           mkdir -p "$out/parser"
+          mkdir -p "$out/queries"
 
           shopt -s extglob
           for ((i = 0; i < "''${#pathsArray[@]}"; i++ ))
@@ -139,13 +140,17 @@ lib.makeOverridable (
 
             mkdir -p "$out/$path"
 
-            tolink=("$source/"!(doc|parser))
+            tolink=("$source/"!(doc|parser|queries))
             if (( ''${#tolink} )); then
               ln -ns "''${tolink[@]}"  -t "$out/$path"
             fi
 
             if [[ -e "$source/parser" && -n "$(ls "$source/parser")" ]]; then
               ln -nsf "$source/parser/"* -t "$out/parser"
+            fi
+
+            if [[ -e "$source/queries" && -n "$(ls "$source/queries")" ]]; then
+              ln -nsf "$source/queries/"* -t "$out/queries"
             fi
 
             if [[ -e "$source/doc" && ! -e "$out/$path/doc" ]]; then
