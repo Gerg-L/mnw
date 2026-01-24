@@ -7,6 +7,7 @@
   stdenvNoCC,
   envsubst,
   callPackage,
+  symlinkJoin,
 }@callPackageArgs:
 lib.makeOverridable (
   {
@@ -43,11 +44,26 @@ lib.makeOverridable (
 
     devPlugins = builtins.mapAttrs (_: v: v.${if dev then "impure" else "pure"}) plugins.dev;
 
-    optPlugins = lib.filterAttrs (_: v: v != null) plugins.optAttrs;
+    _optPlugins = lib.filterAttrs (_: v: v != null) plugins.optAttrs;
 
-    startPlugins = lib.filterAttrs (_: v: v != null) (
+    _startPlugins = lib.filterAttrs (_: v: v != null) (
       plugins.startAttrs // (lib.optionalAttrs (!dev) devPlugins)
     );
+
+    isTreesitter = p: p.isTreesitterGrammar or false || p.isTreesitterQuery or false;
+    optGrammars = lib.filterAttrs (_: plugin: isTreesitter plugin) _optPlugins;
+    startGrammars = lib.filterAttrs (_: plugin: isTreesitter plugin) _startPlugins;
+    allGrammars = lib.attrValues startGrammars ++ lib.attrValues optGrammars;
+
+    treesitterGrammars = symlinkJoin {
+      name = "nvim-treesitter-grammars";
+      paths = allGrammars;
+    };
+
+    optPlugins = lib.filterAttrs (_: p: !isTreesitter p) _optPlugins;
+    startPlugins =
+      (lib.filterAttrs (_: p: !isTreesitter p) _startPlugins)
+      // lib.optionalAttrs (allGrammars != [ ]) { nvim-treesitter-grammars = treesitterGrammars; };
 
     allPython3Dependencies =
       ps:
@@ -129,8 +145,6 @@ lib.makeOverridable (
             -c "helptags ALL" \
             "+quit!"
 
-          mkdir -p "$out/parser"
-
           shopt -s extglob
           for ((i = 0; i < "''${#pathsArray[@]}"; i++ ))
           do
@@ -139,13 +153,9 @@ lib.makeOverridable (
 
             mkdir -p "$out/$path"
 
-            tolink=("$source/"!(doc|parser))
+            tolink=("$source/"!(doc))
             if (( ''${#tolink} )); then
               ln -ns "''${tolink[@]}"  -t "$out/$path"
-            fi
-
-            if [[ -e "$source/parser" && -n "$(ls "$source/parser")" ]]; then
-              ln -nsf "$source/parser/"* -t "$out/parser"
             fi
 
             if [[ -e "$source/doc" && ! -e "$out/$path/doc" ]]; then
