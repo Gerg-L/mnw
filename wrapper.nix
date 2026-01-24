@@ -43,27 +43,26 @@ lib.makeOverridable (
     python3 = providers.python3.package;
 
     devPlugins = builtins.mapAttrs (_: v: v.${if dev then "impure" else "pure"}) plugins.dev;
-
-    _optPlugins = lib.filterAttrs (_: v: v != null) plugins.optAttrs;
-
-    _startPlugins = lib.filterAttrs (_: v: v != null) (
-      plugins.startAttrs // (lib.optionalAttrs (!dev) devPlugins)
-    );
+    optPlugins = lib.filterAttrs (_: v: v != null && !isTreesitter v) plugins.optAttrs;
 
     isTreesitter = p: p.isTreesitterGrammar or false || p.isTreesitterQuery or false;
-    optGrammars = lib.filterAttrs (_: plugin: isTreesitter plugin) _optPlugins;
-    startGrammars = lib.filterAttrs (_: plugin: isTreesitter plugin) _startPlugins;
-    allGrammars = lib.attrValues startGrammars ++ lib.attrValues optGrammars;
 
-    treesitterGrammars = symlinkJoin {
-      name = "nvim-treesitter-grammars";
-      paths = allGrammars;
-    };
-
-    optPlugins = lib.filterAttrs (_: p: !isTreesitter p) _optPlugins;
     startPlugins =
-      (lib.filterAttrs (_: p: !isTreesitter p) _startPlugins)
-      // lib.optionalAttrs (allGrammars != [ ]) { nvim-treesitter-grammars = treesitterGrammars; };
+      let
+        allTreesitter = builtins.filter isTreesitter (
+          builtins.attrValues plugins.startAttrs ++ builtins.attrValues plugins.optAttrs
+        );
+      in
+      lib.filterAttrs (_: v: v != null && !isTreesitter v) (
+        plugins.startAttrs
+        // (lib.optionalAttrs (!dev) devPlugins)
+        // (lib.optionalAttrs (allTreesitter != [ ]) {
+          nvim-treesitter-grammars = symlinkJoin {
+            name = "nvim-treesitter-grammars";
+            paths = allTreesitter;
+          };
+        })
+      );
 
     allPython3Dependencies =
       ps:
