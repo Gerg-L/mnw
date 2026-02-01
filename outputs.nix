@@ -1,7 +1,12 @@
 self:
 {
   lib = {
-    npinsToPlugins = pkgs: pkgs.callPackage ./npinsToPlugins.nix { };
+    npinsToPluginsList =
+      pkgs: path: ((pkgs.callPackage ./npinsToPlugins.nix { }) pkgs.lib.mapAttrsToList) path;
+    npinsToPluginsAttrs =
+      pkgs: path: ((pkgs.callPackage ./npinsToPlugins.nix { }) builtins.mapAttrs) path;
+    npinsToPlugins = self.lib.npinsToPluginsList;
+
     uncheckedWrap = pkgs: pkgs.callPackage ./wrapper.nix { };
     wrap =
       args:

@@ -4,8 +4,8 @@
   fetchgit,
   fetchzip,
 }:
-pathToNpins:
-lib.mapAttrsToList
+func: pathToNpins:
+func
   (
     name: spec:
     let
