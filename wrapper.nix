@@ -98,6 +98,7 @@ lib.makeOverridable (
       name = "mnw-configDir";
       nativeBuildInputs = [ envsubst ];
       __structuredAttrs = true;
+      preferLocalBuilds = true;
 
       sourcesArray = (pluginsToListOfStrings startPlugins) ++ (pluginsToListOfStrings optPlugins);
       pathsArray =
