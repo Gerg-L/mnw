@@ -197,7 +197,7 @@ in
         extraPackages = lib.mkOption {
           type = types.functionTo (types.listOf types.package);
           default = p: [ p.pynvim ];
-          defaultText = lib.literalExpression "p: [ ppynvim ]";
+          defaultText = lib.literalExpression "p: [ pynvim ]";
           description = ''
             Extra packages to be included in the python3 environment.
 
