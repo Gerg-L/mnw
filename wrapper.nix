@@ -129,19 +129,22 @@ lib.makeOverridable (
             export LUA_CPATH="''${LUA_CPATH:-}"
           fi
           envsubst < '${generatedInitLua}' > "$out/init.lua"
+
+          tmpScript="$(mktemp)"
           for ((i = 0; i < "''${#pathsArray[@]}"; i++ ))
           do
             path="''${pathsArray["$i"]}"
             source="''${sourcesArray["$i"]}"
             if [[ -e "$source/doc" && ! -e "$source/doc/tags" ]]; then
               mkdir -p "$out/$path/doc"
-              ln -ns "$source/doc"* -t "$out/$path/doc"
+              ln -ns "$source/doc/"* -t "$out/$path/doc"
+              echo "packadd $(basename "$path")" >> "$tmpScript"
             fi
           done
 
           ${lib.getExe neovim} --headless -n -u NONE -i NONE \
             -c "set packpath=$out" \
-            -c "packloadall" \
+            -c "source $tmpScript" \
             -c "helptags ALL" \
             "+quit!"
 
