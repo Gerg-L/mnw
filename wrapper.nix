@@ -33,9 +33,9 @@ lib.makeOverridable (
     pluginsToListOfStrings = lib.mapAttrsToList (
       n: v:
       if lib.isStringLike v then
-        "${v}"
+        toString v
       else if v ? src && lib.isStringLike v.src then
-        "${v.src}"
+        toString v.src
       else
         throw "mnw: plugin '${n}' cannot be coerced to string, ensure it has a 'outPath' or 'src'"
     );
@@ -76,10 +76,10 @@ lib.makeOverridable (
         luaEnv = neovim.lua.withPackages extraLuaPackages;
         inherit (neovim.lua.pkgs) luaLib;
 
-        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
+        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${toString x}')") (
           (lib.optional (initLua != "") (writeText "init.lua" initLua)) ++ luaFiles
         );
-        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
+        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${toString x}')") (
           (lib.optional (initViml != "") (writeText "init.vim" initViml)) ++ vimlFiles
         );
       in
