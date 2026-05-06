@@ -30,12 +30,14 @@ lib.makeOverridable (
   }@mnwWrapperArgs:
   let
 
+    toStringIfNeeded = x: if !lib.isStorePath x then "${x}" else toString x;
+
     pluginsToListOfStrings = lib.mapAttrsToList (
       n: v:
       if lib.isStringLike v then
-        toString v
+        toStringIfNeeded v
       else if v ? src && lib.isStringLike v.src then
-        toString v.src
+        toStringIfNeeded v.src
       else
         throw "mnw: plugin '${n}' cannot be coerced to string, ensure it has a 'outPath' or 'src'"
     );
@@ -76,10 +78,10 @@ lib.makeOverridable (
         luaEnv = neovim.lua.withPackages extraLuaPackages;
         inherit (neovim.lua.pkgs) luaLib;
 
-        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${toString x}')") (
+        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${toStringIfNeeded x}')") (
           (lib.optional (initLua != "") (writeText "init.lua" initLua)) ++ luaFiles
         );
-        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${toString x}')") (
+        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${toStringIfNeeded x}')") (
           (lib.optional (initViml != "") (writeText "init.vim" initViml)) ++ vimlFiles
         );
       in
