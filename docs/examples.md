@@ -28,4 +28,6 @@ title: Examples
 
 [HeitorAugustoLN](https://github.com/HeitorAugustoLN/nvim-config)
 
+[codevogel's nestvim (standalone, lz.n)](https://github.com/codevogel/nestvim)
+
 Make a PR to add your config :D
