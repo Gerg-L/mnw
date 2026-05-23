@@ -13,7 +13,9 @@ import { RenderDocs } from "easy-nix-documentation";
 
 ## Plugins Configuration
 
-Plugins are a package, a relative path, or an attribute set with a `name`/`pname` and a `src`:
+Plugins are a package, a relative path, or an attribute set with a
+`name`/`pname` and a `src`:
+
 ```nix
 {
   pname = "hello";
@@ -22,19 +24,22 @@ Plugins are a package, a relative path, or an attribute set with a `name`/`pname
 ```
 
 > [!TIP]
-> Use `dev.<name>` for your config see [usage](usage.md) and then [examples](examples.md) for full examples
+> Use `dev.<name>` for your config see [usage](usage.md) and then
+> [examples](examples.md) for full examples
 
-`start` and `startAttrs` are added to `/start` and are `require()`-able
-while `opt` and `optAttrs` are added to `/opt` and must be `packadd`'d or loaded by `lz.n/lazy.nvim` before being `require()`'d
+`start` and `startAttrs` are added to `/start` and are `require()`-able while
+`opt` and `optAttrs` are added to `/opt` and must be `packadd`'d or loaded by
+`lz.n/lazy.nvim` before being `require()`'d
 
-Everything in `opt/start` have their `.dependencies` added to `startAttrs` as well (for nixpkgs compatibility)
-plugins added directly to `*Attrs` do not resolve `.dependencies`
+Everything in `opt/start` have their `.dependencies` added to `startAttrs` as
+well (for nixpkgs compatibility) plugins added directly to `*Attrs` do not
+resolve `.dependencies`
 
-The assignment to `*Attrs` is done by resolving the `pname` or `name` of the package.
-so `{ pname = "foo"; ...` would be put at `*Attrs.foo`
+The assignment to `*Attrs` is done by resolving the `pname` or `name` of the
+package. so `{ pname = "foo"; ...` would be put at `*Attrs.foo`
 
-While if it's a path it'll be added by the path name and then the hash of the path
-so it's recommended to use `*Attrs` for path plugins:
+While if it's a path it'll be added by the path name and then the hash of the
+path so it's recommended to use `*Attrs` for path plugins:
 
 ```nix
 {
@@ -43,18 +48,22 @@ so it's recommended to use `*Attrs` for path plugins:
 ```
 
 `*Attrs` plugins can be set to null to stop them from being installed like:
+
 ```nix
 {
   plugins.startAttrs.fzf-lua = null;
 }
 ```
+
 this is useful for not installing `.dependencies` from nixpkgs plugins
 
-Any plugin in `opt` will override the plugin of the same name in `start` when propagating to `*Attrs` to ensure it's not loaded automatically.
+Any plugin in `opt` will override the plugin of the same name in `start` when
+propagating to `*Attrs` to ensure it's not loaded automatically.
 
 > [!TIP]
-> there's no reason to use `buildVimPlugin` as all it does is copy files generate help tags and run checks.
-> with mnw help tags are generated in the mnw builder
+> there's no reason to use `buildVimPlugin` as all it does is copy files
+> generate help tags and run checks. with mnw help tags are generated in the mnw
+> builder
 
 ### Full example:
 

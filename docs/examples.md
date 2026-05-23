@@ -6,27 +6,34 @@ title: Examples
 
 ## Official examples
 
-[Simple NixOS example](https://github.com/Gerg-L/mnw/tree/master/examples/nixos)
+[NixOS module](https://github.com/Gerg-L/mnw/tree/master/examples/nixos)
 
-[Standalone, easy development](https://github.com/Gerg-L/mnw/tree/master/examples/standalone)
+[Standalone](https://github.com/Gerg-L/mnw/tree/master/examples/standalone)
 
-[Lazy loading with lazy.nvim](https://github.com/Gerg-L/mnw/tree/master/examples/lazy)
+[Standalone](https://github.com/Gerg-L/mnw/tree/master/examples/lz.n) using
+[lz.n](https://github.com/lumen-oss/lz.n)
 
-[Lazy loading with lz.n](https://github.com/Gerg-L/mnw/tree/master/examples/lz.n)
+[Standalone](https://github.com/Gerg-L/mnw/tree/master/examples/lazy) using
+[Lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ## Community examples
 
 [My Neovim flake](https://github.com/Gerg-L/nvim-flake)
 
-NotAShelf's [nvf](https://github.com/NotAShelf/nvf) (lua generation abstraction on top of mnw)
+NotAShelf's [nvf](https://github.com/NotAShelf/nvf) (lua generation abstraction
+on top of mnw)
 
-llakala's [meovim](https://github.com/llakala/meovim) (standalone flake)
+llakala's [meovim](https://github.com/llakala/meovim) (standalone, lz.n)
 
-adamcstephens's [dotfiles](https://codeberg.org/adamcstephens/dotfiles/src/branch/main/apps/neovim)
+adamcstephens's
+[dotfiles](https://codeberg.org/adamcstephens/dotfiles/src/branch/main/apps/neovim)
 
-viperML's [dotfiles](https://github.com/viperML/dotfiles/blob/master/packages/neovim)
+viperML's
+[dotfiles](https://github.com/viperML/dotfiles/blob/master/packages/neovim)
+(standalone, lz.n)
 
-HeitorAugustoLN's [nvim-config](https://github.com/HeitorAugustoLN/nvim-config) (standalone flake)
+HeitorAugustoLN's [nvim-config](https://github.com/HeitorAugustoLN/nvim-config)
+(standalone flake)
 
 codevogel's [nestvim](https://github.com/codevogel/nestvim) (standalone, lz.n)
 

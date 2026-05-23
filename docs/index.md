@@ -19,13 +19,13 @@ hero:
 ---
 
 ## About
+
 Based off the nixpkgs wrapper but:
 
 - in one place
-- more error checking
+- with more error checking
 - a sane interface
-- `evalModules` "type" checking
+- uses the module system for type checking
 - more convenience options
 - doesn't take two functions to wrap
-- `devMode` hot reloading quicker config iteration
-There are no flake inputs.
+- has [devMode](./usage.md#dev-mode) hot reloading for quicker config iteration

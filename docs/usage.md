@@ -1,6 +1,7 @@
 ---
 title: Usage
 ---
+
 # {{ $frontmatter.title }}
 
 Add the flake input
@@ -9,42 +10,41 @@ Add the flake input
 mnw.url = "github:Gerg-L/mnw";
 ```
 
-or `import` the base of this repo which has
-[flake-compat](https://github.com/edolstra/flake-compat)
+or fetch this repo and then import the `default.nix`
 
-Then use one of the modules or `mnw.lib.wrap`
+Then use one of the [modules](#modules) or `mnw.lib.wrap`
 
 ### Wrapper function
 
 The wrapper takes two arguments:
-- a valid instance of `pkgs` or a set of specialArgs, passed to the module
-  - the set must contain the aforementioned `pkgs` (to be used by the
-    wrapper)!
-  - the set can contain extra specialArgs you might need in the module (such
-    as functions, collections of such, npins/niv pins, etc)
-- a module, containing your setup
+
+- A valid instance of `pkgs`. Or an attrset of `specialArgs` which must contain
+  `pkgs`
+- A module containing your config
 
 ```nix
-let
-  neovim = mnw.lib.wrap pkgs {
-    # Your config
-  };
+mnw.lib.wrap pkgs {
+  # Your config
+};
+```
 
-  # or, if your config is a separate file
-  neovim = mnw.lib.wrap pkgs ./config.nix;
+Or if your config is a separate file
 
-  # or, if you need extra specialArgs in your module
-  neovim = mnw.lib.wrap {
-    inherit inputs pkgs;
-    myLib = self.lib;
-  } ./config.nix;
-in {
-...
+```nix
+neovim = mnw.lib.wrap pkgs ./config.nix;
+```
+
+Or if you want to pass `specialArgs` to your module
+
+```nix
+neovim = mnw.lib.wrap {
+  inherit inputs pkgs;
+  myLib = self.lib;
+} ./config.nix;
 ```
 
 > [!TIP]
-> `mnw.lib.wrap` uses `evalModules`, so you can use `imports`, `options`, and
-> `config`!
+> `mnw.lib.wrap` uses `evalModules`, so you can use the full module system
 
 Then add it to `environment.systemPackages` or `users.users.<name>.packages` or
 anywhere you can add a package
@@ -73,7 +73,7 @@ programs.mnw = ./config.nix;
 ```
 
 > [!TIP]
-> `programs.mnw` is a submodule you can use `imports`, `options`, and `config`!
+> `programs.mnw` is a submodule so you can use the fully module system
 
 and mnw will install the wrapped neovim to `environment.systemPackages` or
 `home.packages`
@@ -87,7 +87,22 @@ To setup hot reloading for quicker neovim config iteration:
 
 Put your config plugin in `plugins.dev`,
 
-Then you can use the `.devMode` attribute of the created neovim package!
+```nix
+plugins = {
+  dev.myconfig = {
+    pure = "myconfig";
+    impure = "/home/user/nix-config/nvim";
+  };
+};
+```
+
+Then you can use the `.devMode` attribute of the created neovim package
+
+For example `nix shell .#neovim.devMode` or
+`nix shell .#nixosConfigurations.hostname.config.programs.mnw.finalPackage.devMode`
+
+Which allows you to make changes to your neovim config without rebuilding your
+system/home-manager/neovim (you still have to restart your neovim)
 
 See the [examples](./examples)
 
@@ -99,4 +114,5 @@ Currently mnw only has one lua global variable set
 
 Which is the path to the generated config directory of mnw
 
-You can build/view this directory by building the `.configDir` of the mnw package
+You can build/view this directory by building the `.configDir` of the mnw
+package
