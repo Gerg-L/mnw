@@ -89,7 +89,7 @@ Put your config plugin in `plugins.dev`,
 
 Then you can use the `.devMode` attribute of the created neovim package!
 
-See the examples below:
+See the [examples](./examples)
 
 ### Lua variables
 
