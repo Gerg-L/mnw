@@ -3,7 +3,7 @@ GEM
   specs:
     logger (1.7.0)
     msgpack (1.8.0)
-    multi_json (1.15.0)
+    multi_json (1.21.1)
     neovim (0.10.0)
       msgpack (~> 1.1)
       multi_json (~> 1.0)
@@ -17,4 +17,4 @@ DEPENDENCIES
   neovim
 
 BUNDLED WITH
-   2.6.2
+   2.7.2

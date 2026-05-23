@@ -6,7 +6,7 @@ pkgs.mkShellNoCC {
   packages = [
     pkgs.bundler
     pkgs.bundix
-    pkgs.nixfmt-rfc-style
+    pkgs.nixfmt
   ];
 
   shellHook = ''
