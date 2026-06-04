@@ -108,9 +108,14 @@ func
     let
       json = lib.importJSON pathToNpins;
     in
-    assert lib.assertMsg (json.version == 7) ''
-      Your npins version does not match that of mnw.lib.npinsToPlugins.
-      Please run npins upgrade, if that does not work file a issue in the mnw repo
-    '';
+    assert lib.assertMsg
+      (lib.elem json.version [
+        7
+        8
+      ])
+      ''
+        Your npins version does not match that of mnw.lib.npinsToPlugins.
+        Please run npins upgrade, if that does not work file a issue in the mnw repo
+      '';
     json.pins
   )
