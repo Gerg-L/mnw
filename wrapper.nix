@@ -256,7 +256,7 @@ lib.makeOverridable (
         )
         "--set"
         "NVIM_APPNAME"
-        appName
+        "''${NVIM_APPNAME:-${appName}}"
 
         "--set"
         "VIMINIT"
