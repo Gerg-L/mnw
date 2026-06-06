@@ -28,8 +28,18 @@ in
       example = lib.literalExpression "inputs.neovim-nightly-overlay.packages.\${pkgs.stdenv.system}.default";
     };
 
+    appNameMethod = lib.mkOption {
+      type = types.enum [
+        "set"
+        "set-default"
+      ];
+      default = "set";
+      description = "How to set `$NVIM_APPNAME` with `makeWrapper`";
+      example = "set-default";
+    };
+
     appName = lib.mkOption {
-      type = types.str;
+      type = types.nullOr types.str;
       default = "mnw";
       description = "What to set $NVIM_APPNAME to";
       example = "gerg";

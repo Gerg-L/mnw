@@ -21,6 +21,7 @@ lib.makeOverridable (
     initViml,
     initLua,
     appName,
+    appNameMethod,
     desktopEntry,
     providers,
     dev ? false,
@@ -253,13 +254,15 @@ lib.makeOverridable (
           + "\""
         )
         "--set"
-        "NVIM_APPNAME"
-        appName
-
-        "--set"
         "VIMINIT"
         "source ${configDir}/init.lua"
       ]
+      ++ (lib.optionals (appName != null) [
+        "--${appNameMethod}"
+        "NVIM_APPNAME"
+        appName
+      ])
+
       ++ wrapperArgs
     );
 
