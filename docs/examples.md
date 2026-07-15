@@ -37,4 +37,6 @@ HeitorAugustoLN's [nvim-config](https://github.com/HeitorAugustoLN/nvim-config)
 
 codevogel's [nestvim](https://github.com/codevogel/nestvim) (standalone, lz.n)
 
+NovaViper's [novavim](https://codeberg.org/NovaViper/novavim) (standalone, [lze](https://github.com/BirdeeHub/lze))
+
 Make a PR to add your config :D
