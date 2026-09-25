@@ -39,4 +39,6 @@ codevogel's [nestvim](https://github.com/codevogel/nestvim) (standalone, lz.n)
 
 NovaViper's [novavim](https://codeberg.org/NovaViper/novavim) (standalone, [lze](https://github.com/BirdeeHub/lze))
 
+Gurjaka's [Dotfiles](https://codeberg.org/Gurjaka/dotfiles/src/branch/main/modules/feats/cli/nvim)
+
 Make a PR to add your config :D
