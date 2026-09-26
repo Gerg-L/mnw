@@ -315,14 +315,20 @@ in
                 impure = lib.mkOption {
                   type = types.path // {
                     check =
-                      # a trimmed down version of
-                      # https://github.com/NixOS/nixpkgs/blob/16762245d811fdd74b417cc922223dc8eb741e8b/lib/types.nix#L696
-                      x:
                       let
                         # nixpkgs hashPrefix has a path check which will spit a warning
-                        hasPrefix = pref: (builtins.substring 0 (builtins.stringLength pref) (toString x)) == pref;
+                        hasPrefix =
+                          pref:
+                          let
+                            getGivenPrefix = builtins.substring 0 (builtins.stringLength pref);
+                          in
+                          path: getGivenPrefix (toString path) == pref;
+                        isAbsolutePath = hasPrefix "/";
+                        isHomeRelativePath = hasPrefix "~/";
                       in
-                      hasPrefix "/" || hasPrefix "~/";
+                      # a trimmed down version of
+                      # https://github.com/NixOS/nixpkgs/blob/16762245d811fdd74b417cc922223dc8eb741e8b/lib/types.nix#L696
+                      x: isAbsolutePath x || isHomeRelativePath x;
                   };
                   description = ''
                     The impure absolute paths to the nvim plugin.
@@ -362,13 +368,14 @@ in
     let
       transformPlugins =
         let
+          removeVimPluginPrefix = lib.removePrefix "vimplugin-";
           recurse =
             parent: isDep:
             builtins.foldl'
               (
                 acc: e:
                 let
-                  name = lib.removePrefix "vimplugin-" (
+                  name = removeVimPluginPrefix (
                     if builtins.isAttrs e then
                       lib.getName e
                     else
